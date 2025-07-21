@@ -1,33 +1,19 @@
-# turquoise
+<br>
+<p align="center">
+  <a >
+    <img src="public/favicon.ico" alt="Logo" width="60" height="60">
+  </a>
+  <h2 align="center" style="color: #2ca7b7ff;">Turquoise</h3>
+  <p align="center">
+    一个本地EPUB阅读工具，提供丰富的辅助阅读功能
+  </p>
+</p>
 
-This template should help get you started developing with Vue 3 in Vite.
+<br>
 
-## Recommended IDE Setup
+## 小说一句
+本项目是一个本地运行的EPUB阅读工具。当然，这并非重点，主要是为了解决阅读文言文的困难，后续将开发丰富的辅助功能，例如可进行查词和AI翻译，更可以写注解或者译文，提高文言文的阅读效率（也是我原先项目ClassicTrans的升级版）  
+以上皆为展望，项目刚刚起步  
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
+## 使用技术栈
+Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
