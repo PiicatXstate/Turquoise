@@ -48,34 +48,47 @@
     }
 </style> -->
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <template>
     <el-menu
-        default-active="2"
-        class="el-menu-vertical-demo"
+        default-active="1"
+        class="el-menu-vertical-custom"
         :collapse="isCollapse"
-        @open="handleOpen"
-        @close="handleClose"
         :collapse-transition="false"
     >
         <el-menu-item index="1">
-            <el-icon><location /></el-icon>
+            <el-icon><Reading class="custom-icon" /></el-icon>
             <template #title>Navigator One</template>
         </el-menu-item>
-        
+
         <el-menu-item index="2">
-            <el-icon><icon-menu /></el-icon>
+            <el-icon><Search class="custom-icon" /></el-icon>
             <template #title>Navigator Two</template>
         </el-menu-item>
 
         <el-menu-item index="3" disabled>
-            <el-icon><document /></el-icon>
+            <el-icon><Document class="custom-icon" /></el-icon>
             <template #title>Navigator Three</template>
         </el-menu-item>
 
         <el-menu-item index="4">
-            <el-icon><setting /></el-icon>
+            <el-icon><Setting class="custom-icon" /></el-icon>
             <template #title>Navigator Four</template>
         </el-menu-item>
+
     </el-menu>
 </template>
 
@@ -85,26 +98,69 @@
         Document,
         Menu as IconMenu,
         Location,
+        Reading,
+        Search,
         Setting,
     } from '@element-plus/icons-vue'
 
-    const isCollapse = ref(true)
-    const handleOpen = (key: string, keyPath: string[]) => {
-        console.log(key, keyPath)
-    }
-    const handleClose = (key: string, keyPath: string[]) => {
-        console.log(key, keyPath)
-    }
+    const isCollapse = ref(true); // Not fold by default
 </script>
 
 <style scoped>
+    .el-menu-vertical-custom {
+        height: 100%;
+        --el-menu-bg-color: #ffffff;
+    }
+
+    .el-menu-vertical-custom:not(.el-menu--collapse) {
+        width: 220px;
+    }
+
+    .el-menu--collapse {
+        width: 64px;
+    }
+
+    .el-menu-vertical-custom {
+        border-right: none !important;
+    }
+
+    .custom-icon {
+        line-height: 1px;
+    }
+
+    .el-menu-item {
+        transition: all 0.3s ease;
+        color: #565656 !important;
+    }
+
+    .el-menu-item.is-active {
+        color: #13c2c2 !important;
+        background-color: rgba(19, 194, 194, 0.1) !important;
+    }
+
+    .el-menu-item:not(.is-disabled):hover {
+        color: #13c2c2 !important; /* 悬停青色 */
+        background-color: rgba(19, 194, 194, 0.05) !important;
+    }
+
+    .el-menu-item.is-disabled {
+        opacity: 0.5;
+    }
+
     .el-menu-item.is-active::after {
         content: "";
         position: absolute;
-        left: 0px;
+        left: -1px;
         top: 2px;
         bottom: 2px;
+        width: 4px;
+        background: #13c2c2;
+        border-radius: 0 3px 3px 0;
+    }
+
+    .el-menu--collapse .el-menu-item.is-active::after {
         width: 3px;
-        background: var(--el-color-primary);
+        top: 0;
+        bottom: 0;
     }
 </style>

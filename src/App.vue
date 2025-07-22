@@ -15,12 +15,12 @@
                 </div>
             </el-splitter-panel>
 
-            <el-splitter-panel size="250" min="200" max="350">
+            <el-splitter-panel size="0" min="200" max="350">
                 <div class="demo-panel">Function</div>
             </el-splitter-panel>
 
             <el-splitter-panel>
-                <div class="demo-panel">Main Interface</div>
+                <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.050);">Main Interface</div>
             </el-splitter-panel>
 
             <el-splitter-panel size="0">
@@ -70,3 +70,30 @@
 </style>
 
 
+<style>
+    .el-splitter-bar__dragger-horizontal::before {
+        width: 1px !important;  /* 从2px改为1px */
+        background-color: var(--el-border-color) !important;
+    }
+
+    .el-splitter-bar__dragger-vertical::before {
+        height: 1px !important;  /* 从2px改为1px */
+        background-color: var(--el-border-color) !important;
+    }
+
+    .el-splitter-bar__dragger:hover::before {
+        width: 1px !important;
+        background-color: var(--el-color-primary) !important;
+        opacity: 1 !important;
+    }
+
+    .el-splitter-bar__collapse-icon {
+        background: var(--el-color-primary) !important;
+        border: 1px solid var(--el-color-primary) !important;
+        opacity: 0.5 !important;
+    }
+
+    .el-splitter-bar__collapse-icon:hover {
+        opacity: 1 !important;
+    }
+</style>
