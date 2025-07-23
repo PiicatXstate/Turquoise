@@ -22,4 +22,7 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 `2025.7.20` 创建了这个项目，决定使用 Element-Plus 作为UI组件库  
 `2025.7.21` 使用 Splitter 分隔面板 进行页面布局 写了部分关于侧边栏的 UI   
 `2025.7.22` 给 Aside 侧边栏添加了青色样式  
-`2025.7.23` 往 Main Interface 写一丢丢东西，写了一点点样式，然后一直在搞关于存储和解析的东西，却始终没有运行起来，deepseek实在太过弱智，明天自己写吧
+`2025.7.23` 往 Main Interface 写一丢丢东西，写了一点点样式，然后一直在搞关于存储和解析的东西，却始终没有运行起来，deepseek实在太过弱智，明天自己写吧  
+
+## 预览图
+<img src="public/progress.png" alt="progress" >
