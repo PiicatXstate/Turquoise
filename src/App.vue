@@ -15,12 +15,14 @@
                 </div>
             </el-splitter-panel>
 
-            <el-splitter-panel size="0" min="200" max="350">
+            <el-splitter-panel size="250" min="200" max="350">
                 <div class="demo-panel">Function</div>
             </el-splitter-panel>
 
             <el-splitter-panel>
-                <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.050);">Main Interface</div>
+                <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.050);">
+                    <mainInterface/>
+                </div>
             </el-splitter-panel>
 
             <el-splitter-panel size="0">
@@ -43,6 +45,8 @@
 
 <script lang="ts">
     import Aside from './components/aside.vue';
+    import BookViewer from './components/bookViewer.vue';
+    import mainInterface from './components/mainInterface.vue';
 
     // Fix 'App'Div Height Data
     function refuseScreenSize(){
@@ -55,7 +59,9 @@
     export default {
         name:'App',
         components:{
-            Aside
+            Aside,
+            BookViewer,
+            mainInterface
         }
     }
 </script>

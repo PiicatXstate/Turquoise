@@ -92,6 +92,12 @@
     </el-menu>
 </template>
 
+<script lang="ts">
+    export default {
+        name:'aside'
+    }
+</script>
+
 <script lang="ts" setup>
     import { ref } from 'vue'
     import {
