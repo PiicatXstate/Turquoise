@@ -21,7 +21,8 @@
 
             <el-splitter-panel>
                 <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.050);">
-                    <mainInterface/>
+                    <Suspense><mainInterface/></Suspense>
+                    
                 </div>
             </el-splitter-panel>
 

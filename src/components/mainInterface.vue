@@ -11,7 +11,8 @@
             @change="handleFileChange"
         >
         <div>
-            <BookViewer bookid="9ll5nynny3nvvtr2hy5kcb"/>
+            <img src="" id="cover-image">
+            <BookViewer bookid="mdgxkpvxr9a850k1vsd"/>
         </div>
     </div>
 </template>
@@ -25,35 +26,49 @@
 <script setup lang="ts">
     import { ref } from 'vue';
     import Epub from 'epubjs';
+    import epubStorage from '../epubStorage.ts';
 
     const fileInput = ref<HTMLInputElement | null>(null);
-    const book = ref<any>(null); // 存储 epub 实例
+    const book = ref<any>(null);
 
     const handleUploadClick = () => {
         fileInput.value?.click();
     };
 
+    // try {
+    //     const bookInfo = await epubStorage.getBookInfo('mdgxkpvxr9a850k1vsd');
+    //     console.log('书名:', bookInfo.title);
+        
+    //     if (bookInfo.cover) {
+    //         // 创建封面图片的URL
+    //         const coverUrl = URL.createObjectURL(bookInfo.cover);
+    //         console.log('封面URL:', coverUrl);
+            
+    //     }
+    // } catch (error) {
+    //     console.error('获取书籍信息出错:', error);
+    // }
+
     const handleFileChange = async (event: Event) => {
         const target = event.target as HTMLInputElement;
         const file = target.files?.[0];
-
+        
         if (!file) return;
-
+        
         try {
-            const arrayBuffer = await file.arrayBuffer();
+            const epub = new epubStorage();
+            const arrayBuffer = await epub.parseEpub(file);
+            await epub.storageData(arrayBuffer);
+            
+            const bookId = epub.getBookId();
+            console.log('EPUB 存储成功，ID:', bookId);
             book.value = Epub(arrayBuffer);
-
-            console.log('EPUB 加载成功', book.value);
-
-            // 你可以在这里调用 book.value 的方法
-            // 例如：book.value.ready.then(() => { ... })
-
+            
         } catch (error) {
-            console.error('加载 EPUB 失败:', error);
+            console.error('处理 EPUB 失败:', error);
         }
     };
 </script>
-
 <style scoped>
     .frame{
         position: relative;

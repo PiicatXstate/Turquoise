@@ -11,8 +11,10 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "dexie": "^4.0.11",
     "element-plus": "^2.10.4",
     "epubjs": "^0.3.93",
+    "jszip": "^3.10.1",
     "vue": "^3.5.17"
   },
   "devDependencies": {
