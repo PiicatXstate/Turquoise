@@ -50,9 +50,6 @@
 
 
 
-
-
-
 <template>
     <el-menu
         default-active="1"
@@ -85,7 +82,7 @@
 
 <script lang="ts">
     export default {
-        name:'aside'
+        name:'asideFrame'
     }
 </script>
 

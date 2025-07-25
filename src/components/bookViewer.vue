@@ -60,7 +60,7 @@
 
     // 点击事件（可选）
     const handleClick = () => {
-        console.log('Book clicked:', title);
+        // console.log('Book clicked:', title);
     };
 </script>
 

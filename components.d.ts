@@ -9,8 +9,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Aside: typeof import('./src/components/aside.vue')['default']
+    AsideFrame: typeof import('./src/components/asideFrame.vue')['default']
     Book: typeof import('./src/components/book.vue')['default']
-    BookFrame: typeof import('./src/components/Collapse/bookFrame.vue')['default']
+    BookFrame: typeof import('./src/components/collapse/bookFrame.vue')['default']
     BookViewer: typeof import('./src/components/bookViewer.vue')['default']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElMenu: typeof import('element-plus/es')['ElMenu']
@@ -25,5 +26,7 @@ declare module 'vue' {
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     MainInterface: typeof import('./src/components/mainInterface.vue')['default']
+    MainIntfc: typeof import('./src/components/mainIntfc.vue')['default']
+    Reader: typeof import('./src/components/reader.vue')['default']
   }
 }

@@ -1,6 +1,6 @@
 <template>
     
-    <Aside class="aside" @onclick="handleClick" />
+    <AsideFrame class="aside" @onclick="handleClick" />
     <div
         style="height: 100%; box-shadow: var(--el-border-color-light) 0px 0px 10px"
     >
@@ -61,9 +61,10 @@
 </script>
 
 <script lang="ts">
-    import Aside from './components/aside.vue';
     import BookViewer from './components/bookViewer.vue';
-    import mainInterface from './components/mainInterface.vue';
+    import mainInterface from './components/mainIntfc.vue';
+    import AsideFrame from './components/asideFrame.vue';
+    import reader from './components/reader.vue';
 
     function refuseScreenSize(){
         (document.getElementById('app') as any).style.height = window.innerHeight + 'px';
@@ -74,9 +75,10 @@
     export default {
         name:'App',
         components:{
-            Aside,
+            AsideFrame,
             BookViewer,
-            mainInterface
+            mainInterface,
+            reader
         }
     }
 
@@ -99,7 +101,7 @@
 </style>
 
 
-<!-- <style>
+<style>
     .el-splitter-bar__dragger-horizontal::before {
         width: 1px !important;
         background-color: var(--el-border-color) !important;
@@ -125,4 +127,4 @@
     .el-splitter-bar__collapse-icon:hover {
         opacity: 1 !important;
     }
-</style> -->
+</style>

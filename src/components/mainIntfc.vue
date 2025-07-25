@@ -1,5 +1,7 @@
 <template>
-    <div class="frame">
+    <!-- MAIN -->
+    <!-- 主菜单 供选择书籍进入  -->
+    <div class="frame" v-if=" (Showtype=='MAIN')?true:false">
         <h1 class="title">藏书楼阁</h1>
         <button class="upload" @click="handleUploadClick">导入</button>
         <input 
@@ -15,39 +17,53 @@
                 v-for="book in booksList" 
                 :key="book.bookid" 
                 :bookid="book.bookid"
+                @click="handleBookClick(book.bookid)"
             />
         </el-space>
-        
+    </div>
+
+    <!-- READER -->
+    <!-- Reader 阅读器  -->
+    <div class="frame" v-if=" (Showtype=='READER')?true:false">
+        <reader :bookid="ShowBookID" />
     </div>
 </template>
-
-
-<script lang="ts">
-    export default {
-        name:'mainInterface'
-    }
-</script>
 
 
 <script setup lang="ts">
     import { ref, onMounted } from 'vue';
     import Epub from 'epubjs';
     import epubStorage from '../epubStorage.ts';
+    import { fa } from 'element-plus/es/locales.mjs';
 
+    // 展示模式
+    let Showtype = ref('MAIN')
+    let ShowBookID = ref('')
+
+    // 初始化元素
     const fileInput = ref<HTMLInputElement | null>(null);
     const book = ref<any>(null);
-    const booksList = ref<any[]>([]); // 使用ref创建响应式书籍列表
+    const booksList = ref<any[]>([]);
+
+
+    // 获取全部Bookid
+    const loadBooks = async () => {
+        booksList.value = await epubStorage.getAllBookIds();
+    };
+
+    // 点击小说事件
+    const handleBookClick = (bookid: string) => {
+        Showtype.value = 'READER'
+        ShowBookID.value = bookid
+    };
+
+
+    // 此下为提交表单的逻辑
 
     const handleUploadClick = () => {
         fileInput.value?.click();
     };
 
-    // 加载书籍列表的函数
-    const loadBooks = async () => {
-        booksList.value = await epubStorage.getAllBookIds();
-    };
-
-    // 组件挂载时加载书籍
     onMounted(async () => {
         await loadBooks();
     });
@@ -59,6 +75,7 @@
         if (!file) return;
         
         try {
+            // 提交成功
             const epub = new epubStorage();
             const arrayBuffer = await epub.parseEpub(file);
             await epub.storageData(arrayBuffer);
@@ -67,13 +84,20 @@
             console.log('EPUB 存储成功，ID:', bookId);
             book.value = Epub(arrayBuffer);
             
-            // 重新加载书籍列表以更新视图
             await loadBooks();
+
         } catch (error) {
             console.error('处理 EPUB 失败:', error);
         }
     };
 </script>
+
+<script lang="ts">
+    export default {
+        name:'mainInterface'
+    }
+</script>
+
 
 <style scoped>
     .frame{
@@ -109,14 +133,14 @@
         position: absolute;
         top: 40px;
         left: 5px;
-        right: 5px; /* 添加右侧间距 */
-        bottom: 5px; /* 添加底部间距 */
+        right: 5px; 
+        bottom: 5px;
         padding: 0;
         margin: 0;
-        overflow-y: auto; /* 如果内容超出高度则允许滚动 */
+        overflow-y: auto;
         display: flex;
         flex-wrap: wrap;
-        gap: 10px; /* 设置书籍之间的间距 */
-        align-content: flex-start; /* 顶部对齐 */
+        gap: 10px;
+        align-content: flex-start; 
     }
 </style>
