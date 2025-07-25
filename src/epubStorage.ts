@@ -1,25 +1,54 @@
 import Dexie from 'dexie';
 import JSZip from 'jszip';
 
+
+/**
+ * EPUB 电子书存储管理类
+ * 提供电子书的解析、存储、加载和信息获取功能
+ */
+
 export default class epubStorage {
     private readonly bookid: string;
 
+    /**
+     * 生成一个唯一的书籍ID
+     * @returns 生成的唯一ID字符串
+    */
     static generateId(): string {
         return Date.now().toString(36) + Math.random().toString(36).substring(2);
     }
 
+
+    /**
+     * 构造函数
+     * @param bookid 可选的书籍ID，如果不提供则自动生成
+     */
     constructor(bookid?: string) {
         this.bookid = bookid ? bookid : epubStorage.generateId();
     }
 
+    /**
+     * 获取当前书籍ID
+     * @returns 当前书籍的ID
+     */
     getBookId(): string {
         return this.bookid;
     }
 
+    /**
+     * 解析EPUB文件为ArrayBuffer
+     * @param file 要解析的EPUB文件
+     * @returns 解析后的ArrayBuffer
+     */
     async parseEpub(file: File): Promise<ArrayBuffer> {
         return await file.arrayBuffer();
     }
 
+    /**
+     * 存储EPUB文件数据到数据库
+     * @param data 要存储的ArrayBuffer数据
+     * @returns Promise<void>
+     */
     async storageData(data: ArrayBuffer): Promise<void> {
         interface Book {
             bookid: string;
@@ -49,6 +78,11 @@ export default class epubStorage {
         });
     }
     
+    /**
+     * 根据书籍ID加载书籍数据
+     * @param bookid 要加载的书籍ID
+     * @returns 包含书籍数据的ArrayBuffer，如果未找到则返回null
+     */
     static async loadBook(bookid: string): Promise<ArrayBuffer | null> {
         class MyDatabase extends Dexie {
             books!: Dexie.Table<{ bookid: string; fileData: ArrayBuffer }, string>;
@@ -66,28 +100,31 @@ export default class epubStorage {
         return book ? book.fileData : null;
     }
 
-    static async dpArrayBuffer(arrayBuffer: ArrayBuffer | any){
+    /**
+     * 将ArrayBuffer解压为JSZip对象
+     * @param arrayBuffer 要解压的ArrayBuffer数据
+     * @returns 解压后的JSZip对象
+     */
+    static async dpArrayBuffer(arrayBuffer: ArrayBuffer | any): Promise<JSZip> {
         const zip = new JSZip();
         const zipContent = await zip.loadAsync(arrayBuffer);
-        return zipContent
+        return zipContent;
     }
 
     /**
      * 通过书籍ID获取小说信息和封面
      * @param bookid 书籍ID
      * @returns 返回包含书名和封面的对象 {title: string, cover: Blob|null}
+     * @throws 如果未找到书籍或EPUB格式无效会抛出错误
      */
     static async getBookInfo(bookid: string): Promise<{title: string, cover: Blob | null}> {
-        // 1. 加载书籍数据
         const arrayBuffer = await this.loadBook(bookid);
         if (!arrayBuffer) {
             throw new Error('未找到该书籍');
         }
 
-        // 2. 解析EPUB(ZIP)文件
         const zip = await this.dpArrayBuffer(arrayBuffer);
         
-        // 3. 查找container.xml定位OPF文件路径
         const containerFile = zip.file('META-INF/container.xml');
         if (!containerFile) {
             throw new Error('EPUB格式无效：未找到container.xml');
@@ -102,7 +139,6 @@ export default class epubStorage {
         const opfPath = opfPathMatch[1];
         const opfDirectory = opfPath.substring(0, opfPath.lastIndexOf('/') + 1);
         
-        // 4. 解析OPF文件内容
         const opfFile = zip.file(opfPath);
         if (!opfFile) {
             throw new Error('EPUB格式无效：未找到OPF文件');
@@ -110,64 +146,55 @@ export default class epubStorage {
         
         const opfContent = await opfFile.async('text');
         
-        // 5. 提取书名
         const titleMatch = opfContent.match(/<dc:title[^>]*>([^<]*)<\/dc:title>/i);
         const title = titleMatch ? titleMatch[1] : '未知书名';
         
         let coverPath: string | null = null;
 
-    // 6.1 先查找metadata中定义的封面
-    const coverIdMatch = opfContent.match(/<meta[^>]*name="cover"[^>]*content="([^"]*)"[^>]*\/>/i);
-    
-    if (coverIdMatch) {
-        const coverId = coverIdMatch[1];
-        const coverItemMatch = new RegExp(`<item[^>]*id="${coverId}"[^>]*href="([^"]*)"[^>]*\/>`, 'i').exec(opfContent);
-        if (coverItemMatch) {
-            coverPath = coverItemMatch[1];
-        }
-    }
-    
-    // 6.2 如果没有明确定义的封面，尝试常见封面文件名
-    if (!coverPath) {
-        const commonCoverNames = ['cover.jpg', 'cover.jpeg', 'cover.png', 'cover.gif'];
-        for (const name of commonCoverNames) {
-            // 修复：使用绝对路径检查
-            const fullPath = `${opfDirectory}${name}`;
-            if (zip.file(fullPath)) {
-                coverPath = name;
-                break;
-            }
-        }
-    }
-    
-    // 7. 获取封面图片Blob
-    let coverBlob: Blob | null = null;
-    if (coverPath) {
-        // 修复：标准化路径处理
-        const normalizedPath = coverPath.startsWith('/') 
-            ? coverPath.substring(1) 
-            : `${opfDirectory}${coverPath}`;
+        const coverIdMatch = opfContent.match(/<meta[^>]*name="cover"[^>]*content="([^"]*)"[^>]*\/>/i);
         
-        const coverFile = zip.file(normalizedPath);
-        if (coverFile) {
-            try {
-                // 使用 'blob' 类型获取数据
-                const blobData = await coverFile.async('blob');
-                // 获取正确的 MIME 类型
-                const mimeType = this.getMimeTypeFromExtension(coverPath);
-                // 创建带类型的新 Blob
-                coverBlob = new Blob([blobData], { type: mimeType });
-            } catch (e) {
-                console.error('封面读取失败:', e);
-                coverBlob = null;
+        if (coverIdMatch) {
+            const coverId = coverIdMatch[1];
+            const coverItemMatch = new RegExp(`<item[^>]*id="${coverId}"[^>]*href="([^"]*)"[^>]*\/>`, 'i').exec(opfContent);
+            if (coverItemMatch) {
+                coverPath = coverItemMatch[1];
             }
         }
-    }
-    
-    return {
-        title,
-        cover: coverBlob
-    };
+        
+        if (!coverPath) {
+            const commonCoverNames = ['cover.jpg', 'cover.jpeg', 'cover.png', 'cover.gif'];
+            for (const name of commonCoverNames) {
+                const fullPath = `${opfDirectory}${name}`;
+                if (zip.file(fullPath)) {
+                    coverPath = name;
+                    break;
+                }
+            }
+        }
+        
+        let coverBlob: Blob | null = null;
+        if (coverPath) {
+            const normalizedPath = coverPath.startsWith('/') 
+                ? coverPath.substring(1) 
+                : `${opfDirectory}${coverPath}`;
+            
+            const coverFile = zip.file(normalizedPath);
+            if (coverFile) {
+                try {
+                    const blobData = await coverFile.async('blob');
+                    const mimeType = this.getMimeTypeFromExtension(coverPath);
+                    coverBlob = new Blob([blobData], { type: mimeType });
+                } catch (e) {
+                    console.error('封面读取失败:', e);
+                    coverBlob = null;
+                }
+            }
+        }
+        
+        return {
+            title,
+            cover: coverBlob
+        };
     }
 
     /**
@@ -192,5 +219,25 @@ export default class epubStorage {
             default:
                 return 'application/octet-stream';
         }
+    }
+
+    /**
+     * 获取所有书籍的ID和基本信息（不包含文件数据）
+     * @returns 返回包含书籍ID和基本信息的数组 [{bookid: string, fileName: string, added: Date}]
+     */
+    static async getAllBookIds(): Promise<Array<{bookid: string, fileName: string, added: Date}>> {
+        class MyDatabase extends Dexie {
+            books!: Dexie.Table<{ bookid: string; fileName: string; added: Date }, string>;
+            
+            constructor() {
+                super('EpubLibrary');
+                this.version(1).stores({
+                    books: 'bookid, fileName, added'
+                });
+            }
+        }
+
+        const db = new MyDatabase();
+        return await db.books.toArray();
     }
 }

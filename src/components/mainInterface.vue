@@ -10,12 +10,17 @@
             accept=".epub" 
             @change="handleFileChange"
         >
-        <div>
-            <img src="" id="cover-image">
-            <BookViewer bookid="mdgxkpvxr9a850k1vsd"/>
-        </div>
+        <el-space wrap class="space">
+            <BookViewer 
+                v-for="book in booksList" 
+                :key="book.bookid" 
+                :bookid="book.bookid"
+            />
+        </el-space>
+        
     </div>
 </template>
+
 
 <script lang="ts">
     export default {
@@ -23,31 +28,29 @@
     }
 </script>
 
+
 <script setup lang="ts">
-    import { ref } from 'vue';
+    import { ref, onMounted } from 'vue';
     import Epub from 'epubjs';
     import epubStorage from '../epubStorage.ts';
 
     const fileInput = ref<HTMLInputElement | null>(null);
     const book = ref<any>(null);
+    const booksList = ref<any[]>([]); // 使用ref创建响应式书籍列表
 
     const handleUploadClick = () => {
         fileInput.value?.click();
     };
 
-    // try {
-    //     const bookInfo = await epubStorage.getBookInfo('mdgxkpvxr9a850k1vsd');
-    //     console.log('书名:', bookInfo.title);
-        
-    //     if (bookInfo.cover) {
-    //         // 创建封面图片的URL
-    //         const coverUrl = URL.createObjectURL(bookInfo.cover);
-    //         console.log('封面URL:', coverUrl);
-            
-    //     }
-    // } catch (error) {
-    //     console.error('获取书籍信息出错:', error);
-    // }
+    // 加载书籍列表的函数
+    const loadBooks = async () => {
+        booksList.value = await epubStorage.getAllBookIds();
+    };
+
+    // 组件挂载时加载书籍
+    onMounted(async () => {
+        await loadBooks();
+    });
 
     const handleFileChange = async (event: Event) => {
         const target = event.target as HTMLInputElement;
@@ -64,11 +67,14 @@
             console.log('EPUB 存储成功，ID:', bookId);
             book.value = Epub(arrayBuffer);
             
+            // 重新加载书籍列表以更新视图
+            await loadBooks();
         } catch (error) {
             console.error('处理 EPUB 失败:', error);
         }
     };
 </script>
+
 <style scoped>
     .frame{
         position: relative;
@@ -98,5 +104,19 @@
     }
     .upload:hover{
         background-color: rgb(163, 204, 220);
+    }
+    .space {
+        position: absolute;
+        top: 40px;
+        left: 5px;
+        right: 5px; /* 添加右侧间距 */
+        bottom: 5px; /* 添加底部间距 */
+        padding: 0;
+        margin: 0;
+        overflow-y: auto; /* 如果内容超出高度则允许滚动 */
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px; /* 设置书籍之间的间距 */
+        align-content: flex-start; /* 顶部对齐 */
     }
 </style>

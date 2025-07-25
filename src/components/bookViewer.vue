@@ -66,11 +66,8 @@
 
 <style scoped>
     .bookFrame {
-        position: absolute;
         width: 154px;
         height: 219px;
-        top: 43px;
-        left: 5px;
         cursor: pointer;
         border-radius: 4px;
     }

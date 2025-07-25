@@ -53,15 +53,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
 <template>
     <el-menu
         default-active="1"
@@ -69,9 +60,9 @@
         :collapse="isCollapse"
         :collapse-transition="false"
     >
-        <el-menu-item index="1">
+        <el-menu-item index="1" @click="read">
             <el-icon><Reading class="custom-icon" /></el-icon>
-            <template #title>Navigator One</template>
+            <template #title>图书馆</template>
         </el-menu-item>
 
         <el-menu-item index="2">
@@ -109,7 +100,12 @@
         Setting,
     } from '@element-plus/icons-vue'
 
-    const isCollapse = ref(true); // Not fold by default
+    const isCollapse = ref(true);
+
+    const emit = defineEmits(['onclick'])
+    function read(){
+        emit('onclick', '666')
+    }
 </script>
 
 <style scoped>
@@ -127,7 +123,7 @@
     }
 
     .el-menu-vertical-custom {
-        border-right: none !important;
+        border-right: 2px solid rgb(228, 231, 237)
     }
 
     .custom-icon {
