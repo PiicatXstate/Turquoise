@@ -1,4 +1,7 @@
+index.js:4545  Blocked script execution in 'about:srcdoc' because the document's frame is sandboxed and the 'allow-scripts' permission is not set.
+
 <template>
+    <div id="viewer"></div>
 </template>
 
 <script setup lang="ts">
@@ -10,6 +13,11 @@
     const arrayBuffer:ArrayBuffer = (await epubStorage.loadBook(props.bookid) as ArrayBuffer)
     
     const book = Epub(arrayBuffer,{})
+    const rendition = book.renderTo('viewer', {
+        width: '100%',
+        height: '100%'
+    });
+    rendition.display();
 </script>
 
 <script lang="ts">
