@@ -120,7 +120,7 @@
     }
 
     .el-menu-vertical-custom {
-        border-right: 2px solid rgb(228, 231, 237)
+        border-right: 1.5px solid rgb(228, 231, 237)
     }
 
     .custom-icon {
