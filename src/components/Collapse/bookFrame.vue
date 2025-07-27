@@ -1,61 +1,115 @@
 <template>
-  <div class="demo-collapse">
-    <el-collapse v-model="activeNames" @change="handleChange">
-      <el-collapse-item title="Consistency" name="1">
-        <div>
-          Consistent with real life: in line with the process and logic of real
-          life, and comply with languages and habits that the users are used to;
-        </div>
-        <div>
-          Consistent within interface: all elements should be consistent, such
-          as: design style, icons and texts, position of elements, etc.
-        </div>
-      </el-collapse-item>
-      <el-collapse-item title="Feedback" name="2">
-        <div>
-          Operation feedback: enable the users to clearly perceive their
-          operations by style updates and interactive effects;
-        </div>
-        <div>
-          Visual feedback: reflect current state by updating or rearranging
-          elements of the page.
-        </div>
-      </el-collapse-item>
-      <el-collapse-item title="Efficiency" name="3">
-        <div>
-          Simplify the process: keep operating process simple and intuitive;
-        </div>
-        <div>
-          Definite and clear: enunciate your intentions clearly so that the
-          users can quickly understand and make decisions;
-        </div>
-        <div>
-          Easy to identify: the interface should be straightforward, which helps
-          the users to identify and frees them from memorizing and recalling.
-        </div>
-      </el-collapse-item>
-      <el-collapse-item title="Controllability" name="4">
-        <div>
-          Decision making: giving advices about operations is acceptable, but do
-          not make decisions for the users;
-        </div>
-        <div>
-          Controlled consequences: users should be granted the freedom to
-          operate, including canceling, aborting or terminating current
-          operation.
-        </div>
-      </el-collapse-item>
-    </el-collapse>
-  </div>
+    <h1 class="title">·目录</h1>
+        <el-tree 
+            class="tree"
+            :data="data"
+            :props="defaultProps"
+            @node-click="handleNodeClick"
+        />
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+    import { bookOBJ } from '@/stores/bookOBJ.ts';
+    import { ref, watch } from 'vue'; // 引入 ref
 
-import type { CollapseModelValue } from 'element-plus'
 
-const activeNames = ref(['1'])
-const handleChange = (val: CollapseModelValue) => {
-  console.log(val)
-}
+    /**
+     * 将对象中的所有 'subitems' 属性名改为 'children'
+     */
+    function renameSubitemsToChildren<T>(obj: T): T {
+        if (typeof obj !== 'object' || obj === null) {
+            return obj;
+        }
+
+        if (Array.isArray(obj)) {
+            return obj.map(item => renameSubitemsToChildren(item)) as unknown as T;
+        }
+
+        const newObj: any = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                const newKey = key === 'subitems' ? 'children' : key;
+                newObj[newKey] = renameSubitemsToChildren((obj as any)[key]);
+            }
+        }
+
+        return newObj;
+    }
+
+    interface Tree {
+        label: string
+        subitems?: Tree[]
+        href?: string
+    }
+    const data = ref<Tree[]>([]);
+
+
+    const user = bookOBJ() 
+
+    watch(() => user.book, (Book) => {
+        if(Book){
+            // @ts-ignore
+            let book = Book.loaded.navigation;
+            // @ts-ignore
+            book.then(function(toc){
+                data.value = [];
+                // @ts-ignore
+                toc.forEach(function(chapter) {  
+                    data.value.push(renameSubitemsToChildren(chapter))
+                })
+            });
+        }
+    });
+
+    const handleNodeClick = (data: Tree) => {
+        const user = bookOBJ() 
+        user.changeMenu = data.href; 
+    }
+
+    const defaultProps = {
+        subitems: 'subitems',
+        label: 'label',
+    }
 </script>
+
+<script lang="ts">
+    export default {
+        name: 'bookFrame'
+    };
+</script>
+
+<style scoped>
+    .title{
+        font-family: 'Source Han Serif SC Heavy';
+        font-size: 19px;
+        position: absolute;
+        left: 13px;
+        top: 0px;
+        color: rgb(10, 123, 168);
+    }
+    .tree {
+        position: absolute;
+        top: 45px;
+        width: 100%;
+        height: calc(100% - 30px);
+        overflow: auto;
+        background-color: rgba(0,0,0,0);
+    }
+    .tree::-webkit-scrollbar {
+        width: 2px;
+    }
+    .tree::-webkit-scrollbar-track {
+        background: rgb(239, 239, 239);
+        border-radius: 2px;
+    }
+    .tree::-webkit-scrollbar-thumb {
+        background: rgb(157, 220, 227);
+        border-radius: 10px;
+    }
+    .tree::-webkit-scrollbar-thumb:hover {
+        background: rgb(13, 151, 205);
+    }
+</style>
+
+<style>
+</style>

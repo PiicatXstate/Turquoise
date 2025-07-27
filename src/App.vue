@@ -21,12 +21,14 @@
                 v-if='foldState'
             >
 
-                <div class="demo-panel">Function</div>
+                <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.030);">
+                    <collapse/>
+                </div>
 
             </el-splitter-panel>
 
             <el-splitter-panel >
-                <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.050);">
+                <div class="demo-panel" style="background-color: rgba(19, 194, 194, 0.10);">
                     <Suspense>
                         <mainInterface/>
                     </Suspense>
@@ -65,6 +67,9 @@
     import mainInterface from './components/mainIntfc.vue';
     import AsideFrame from './components/asideFrame.vue';
     import reader from './components/reader.vue';
+    import collapse from './components/collapse.vue';
+    import bookFrame from './components/collapse/bookFrame.vue';
+
 
     function refuseScreenSize(){
         (document.getElementById('app') as any).style.height = window.innerHeight + 'px';
@@ -78,13 +83,13 @@
             AsideFrame,
             BookViewer,
             mainInterface,
-            reader
+            reader,
+            bookFrame,
+            collapse
         }
     }
 
 </script>
-
-
 
 
 <style scoped>
