@@ -1,9 +1,10 @@
 <template>
-    <h1 class="title">·目录</h1>
+    <h1 class="title"> 目录</h1>
         <el-tree 
             class="tree"
             :data="data"
             :props="defaultProps"
+            :expand-on-click-node="false"
             @node-click="handleNodeClick"
         />
 </template>
@@ -45,6 +46,18 @@
 
 
     const user = bookOBJ() 
+    if(user.book){
+            // @ts-ignore
+            let book = user.book.loaded.navigation;
+            // @ts-ignore
+            book.then(function(toc){
+                data.value = [];
+                // @ts-ignore
+                toc.forEach(function(chapter) {  
+                    data.value.push(renameSubitemsToChildren(chapter))
+                })
+            });
+    }
 
     watch(() => user.book, (Book) => {
         if(Book){
@@ -80,20 +93,21 @@
 
 <style scoped>
     .title{
-        font-family: 'Source Han Serif SC Heavy';
         font-size: 19px;
         position: absolute;
-        left: 13px;
+        left: 21px;
         top: 0px;
-        color: rgb(10, 123, 168);
+        color: rgb(2, 52, 72);
     }
     .tree {
         position: absolute;
-        top: 45px;
-        width: 100%;
+        top: 10px;
+        left: -5%;
+        width: 111%;
         height: calc(100% - 30px);
         overflow: auto;
-        background-color: rgba(0,0,0,0);
+        background-color: rgba(0, 0, 0, 0);
+        scale: 0.9;
     }
     .tree::-webkit-scrollbar {
         width: 2px;

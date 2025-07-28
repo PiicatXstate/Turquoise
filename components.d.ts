@@ -11,6 +11,7 @@ declare module 'vue' {
     Aside: typeof import('./src/components/aside.vue')['default']
     AsideFrame: typeof import('./src/components/asideFrame.vue')['default']
     Book: typeof import('./src/components/book.vue')['default']
+    BookCatalog: typeof import('./src/components/collapse/bookCatalog.vue')['default']
     BookFrame: typeof import('./src/components/collapse/bookFrame.vue')['default']
     BookViewer: typeof import('./src/components/bookViewer.vue')['default']
     Collapse: typeof import('./src/components/collapse.vue')['default']

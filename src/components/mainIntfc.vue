@@ -25,7 +25,7 @@
     <!-- READER -->
     <!-- Reader 阅读器  -->
     <div class="frame" v-if=" (Showtype=='READER')?true:false">
-        <reader :bookid="ShowBookID" />
+        <reader :bookid="ShowBookID" style="overflow: hidden;"/>
     </div>
 </template>
 

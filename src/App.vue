@@ -68,7 +68,7 @@
     import AsideFrame from './components/asideFrame.vue';
     import reader from './components/reader.vue';
     import collapse from './components/collapse.vue';
-    import bookFrame from './components/collapse/bookFrame.vue';
+    import bookFrame from './components/collapse/bookCatalog.vue';
 
 
     function refuseScreenSize(){

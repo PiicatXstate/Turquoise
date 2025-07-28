@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
     import { ref } from 'vue';
-    import BookFrame from './collapse/bookFrame.vue';
+    import BookFrame from './collapse/bookCatalog.vue';
 </script>
 
 <style scoped>

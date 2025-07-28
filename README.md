@@ -42,7 +42,8 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 `2025.7.24` 干了超多事情，把EPUB存储模块写在了`.src/epubStorage.ts` 使用 IndexedDB 作为数据库，然后写了一点关于 BookViewer 的样式和动画  
 `2025.7.25` 修改了布局 采用 Menu + Splitter 解决了布局长久以来的问题。使用了 Space 间距多 BookViewer  EPUB渲染仍有问题  
 `2025.7.26` 经过一天的反复捣鼓，看了一堆库，翻来覆去，终于在实践官方example文件后 给ds重新编写后 EPUB书本终于加载出来了 第一阶任务完成   
-`2025.7.27` 重写Reader.vue文件，研究EpubJS ing... 使用 pinia 进行组件间数据传输，完成目录功能，写好目录跳转  
+`2025.7.27` 重写Reader.vue文件，研究EpubJS ing... 使用 pinia 进行组件间数据传输，完成目录功能，写好目录跳转。紧急加更，当视窗大小发生改变就重新渲染  
+`2025.7.28` 修复目录栏消失BUG 更改目录样式 更改Reader样式，使风格更加柔和
 
 
 ## 预览图
@@ -54,7 +55,7 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 
 ## 鸣谢
 > Flow -https://app.flowoss.com/  
-> 提供页面布局思路
+> 提供页面布局、样式思路
 
 >识典古籍 -https://www.shidianguji.com/  
 >提供功能设计思路
