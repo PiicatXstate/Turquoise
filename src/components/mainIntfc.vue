@@ -122,7 +122,7 @@
         top: 19.5px;
         font-weight: 700;
         font-family: '黑体';
-        color: rgb(10, 124, 169);
+        color: rgb(6, 86, 118);
         border: none;
         background-color: rgb(198, 225, 236);
     }
