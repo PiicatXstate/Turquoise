@@ -32,6 +32,7 @@
 
 <script setup lang="ts">
     import { ref, onMounted } from 'vue';
+    import { ElMessage } from 'element-plus'
     import Epub from 'epubjs';
     import epubStorage from '../epubStorage.ts';
     import { fa } from 'element-plus/es/locales.mjs';
@@ -81,13 +82,16 @@
             await epub.storageData(arrayBuffer);
             
             const bookId = epub.getBookId();
-            console.log('EPUB 存储成功，ID:', bookId);
+            ElMessage({
+                message: 'EPUB 存储成功',
+                type: 'success',
+            })
             book.value = Epub(arrayBuffer);
             
             await loadBooks();
 
         } catch (error) {
-            console.error('处理 EPUB 失败:', error);
+            ElMessage.error('处理 EPUB 失败：' + error)
         }
     };
 </script>

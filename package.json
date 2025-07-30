@@ -25,6 +25,7 @@
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/tsconfig": "^0.7.0",
     "npm-run-all2": "^8.0.4",
+    "patch-package": "^8.0.0",
     "typescript": "~5.8.0",
     "unplugin-auto-import": "^19.3.0",
     "unplugin-vue-components": "^28.8.0",
