@@ -57,14 +57,14 @@
         :collapse="isCollapse"
         :collapse-transition="false"
     >
-        <el-menu-item index="1" @click="read">
+        <el-menu-item index="1" @click="read('bookCatalog')">
             <el-icon><Reading class="custom-icon" /></el-icon>
-            <template #title>图书馆</template>
+            <template #title>目录</template>
         </el-menu-item>
 
-        <el-menu-item index="2">
-            <el-icon><Search class="custom-icon" /></el-icon>
-            <template #title>Navigator Two</template>
+        <el-menu-item index="2" @click="read('chatHis')">
+            <el-icon><ChatLineSquare class="custom-icon" /></el-icon>
+            <template #title>对话记录</template>
         </el-menu-item>
 
         <el-menu-item index="3" disabled>
@@ -95,13 +95,14 @@
         Reading,
         Search,
         Setting,
+        ChatLineSquare,
     } from '@element-plus/icons-vue'
 
     const isCollapse = ref(true);
 
     const emit = defineEmits(['onclick'])
-    function read(){
-        emit('onclick', '666')
+    function read(type: string){
+        emit('onclick', type)
     }
 </script>
 

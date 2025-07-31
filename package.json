@@ -11,13 +11,18 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "@devui-design/icons": "^1.4.0",
+    "@matechat/core": "^1.6.0",
+    "@tdesign-vue-next/chat": "^0.4.3",
     "ant-design-vue": "^4.2.6",
     "dexie": "^4.0.11",
     "element-plus": "^2.10.4",
     "epubjs": "^0.3.93",
     "jszip": "^3.10.1",
+    "markdown-it-emoji": "^3.0.0",
     "pinia": "^3.0.3",
-    "vue": "^3.5.17"
+    "vue": "^3.5.17",
+    "vue-devui": "^1.6.33"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",

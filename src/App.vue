@@ -36,12 +36,14 @@
             </el-splitter-panel>
 
             <el-splitter-panel size="0">
-                <el-splitter layout="vertical">
-                    <el-splitter-panel>
+                <el-splitter layout="vertical" style="overflow: hidden;">
+                    <el-splitter-panel size="0">
                         <div class="demo-panel">Query</div>
                     </el-splitter-panel>
                     <el-splitter-panel>
-                        <div class="demo-panel">Translate</div>
+                        <div class="demo-panel">
+                            <aitrans/>
+                        </div>
                     </el-splitter-panel>
 
                 </el-splitter>
@@ -54,11 +56,22 @@
 
 <script lang="ts" setup>
     import { ref } from 'vue';
+    import {collapsePart} from '@/stores/collapsePart'
 
     let foldState = ref(true)
 
+    // 显示Part逻辑
     function handleClick(payload:any){
-        foldState.value = !foldState.value
+        let part = collapsePart()
+        if(payload == part.part && foldState.value){
+            foldState.value = !foldState.value
+            part.part = ''
+        }else if(payload !== part.part && !foldState.value){
+            foldState.value = !foldState.value
+            part.part = payload
+        }else{
+            part.part = payload
+        }
     }
 </script>
 
@@ -69,6 +82,8 @@
     import reader from './components/reader.vue';
     import collapse from './components/collapse.vue';
     import bookFrame from './components/collapse/bookCatalog.vue';
+    import chatHis from './components/collapse/chatHis.vue';
+    import aitrans from './components/aitrans.vue';
 
 
     function refuseScreenSize(){
@@ -85,7 +100,9 @@
             mainInterface,
             reader,
             bookFrame,
-            collapse
+            collapse,
+            aitrans,
+            chatHis
         }
     }
 

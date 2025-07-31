@@ -93,15 +93,15 @@
 
 <style scoped>
     .title{
-        font-size: 19px;
+        font-size: 16px;
         position: absolute;
-        left: 21px;
+        left: 15px;
         top: 0px;
         color: rgb(2, 52, 72);
     }
     .tree {
         position: absolute;
-        top: 10px;
+        top: 0px;
         left: -5%;
         width: 111%;
         height: calc(100% - 30px);

@@ -45,7 +45,8 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 `2025.7.27` 重写Reader.vue文件，研究EpubJS ing... 使用 pinia 进行组件间数据传输，完成目录功能，写好目录跳转。紧急加更，当视窗大小发生改变就重新渲染  
 `2025.7.28` 修复目录栏消失BUG 更改目录样式 更改Reader样式，使风格更加柔和
 `2025.7.29` 增加文章数据信息展示 完成选中右键位置自动计算和相关样式  
-`2025.7.30` EpubCFI的BUG过多，我更改了增加注释的方式，直接操作DOM，完成高亮
+`2025.7.30` EpubCFI的BUG过多，我更改了增加注释的方式，直接操作DOM，完成高亮  
+`2025.7.31` 完成大部分Turquoise AI的界面布局，接入API
 
 ## 预览图
 主界面
@@ -62,4 +63,4 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 >提供功能设计思路
 
 >硅基流动 - https://www.siliconflowcn.com/  
->提供免费的 Qwen-7b API
+>提供免费的 DeepSeek-R1-0528-Qwen3-8B

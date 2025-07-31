@@ -20,10 +20,10 @@
             <HighlightOutlined id="highLight" @click="highLightDoc"/>
             <p id="HighLightText">高亮</p>
 
-            <BoldOutlined id="bold"/>
+            <BoldOutlined id="bold" @click="boldDoc"/>
             <p id="boldText">加粗</p>
 
-            <ItalicOutlined id="italic"/>
+            <ItalicOutlined id="italic" @click="italicDoc"/>
             <p id="italicText">斜体</p>
 
             <UnderlineOutlined id="underline" @click="underlineDoc"/> 
@@ -433,12 +433,61 @@
     }
 
 
+    /**
+     * 在指定范围内应用自定义样式
+     * @param range 要应用样式的DOM范围
+     * @param styleConfig 样式配置函数，接收创建的HTMLElement并设置样式
+     */
+    function applyStyleToRange(
+        range: Range,
+        styleConfig: (element: HTMLElement) => void
+    ): void {
+        const textNodes = getTextNodesInRange(range);
+        const doc = range.startContainer.ownerDocument;
+        if (doc){
+        textNodes.forEach((node, index) => {
+            const text = node.nodeValue || '';
+            const isFirst = index === 0;
+            const isLast = index === textNodes.length - 1;
+            const startOffset = isFirst ? range.startOffset : 0;
+            const endOffset = isLast ? range.endOffset : text.length;
+            
+            // 创建样式包裹元素
+            const wrapper = doc.createElement('span');
+            styleConfig(wrapper);
+            
+            // 提取选中文本
+            const selectedText = text.substring(startOffset, endOffset);
+            
+            // 创建文本片段
+            const beforeText = doc.createTextNode(text.substring(0, startOffset));
+            const afterText = doc.createTextNode(text.substring(endOffset));
+            const highlightText = doc.createTextNode(selectedText);
+            
+            // 构建DOM结构
+            wrapper.appendChild(highlightText);
+            
+            // 替换原始节点
+            const parent = node.parentNode;
+            if (parent) {
+                if (beforeText.length > 0) {
+                    parent.insertBefore(beforeText, node);
+                }
+                parent.insertBefore(wrapper, node);
+                if (afterText.length > 0) {
+                    parent.insertBefore(afterText, node);
+                }
+                parent.removeChild(node);
+            }
+        });
+    }
+    }
+
     // 高亮
     function highLightDoc(){
         launchShowJudge.value = ! launchShowJudge.value;
         
     }
-    
     function highLightColor(color: string): void {
         const iframe = rendition.value.manager.container.querySelector('iframe');
         if (!iframe) return;
@@ -451,70 +500,71 @@
             const range = selection.getRangeAt(0);
             const rgbaColor = hexToRgba(color, 0.1);
             
-            // 获取选区内的所有文本节点
-            const textNodes = getTextNodesInRange(range);
-            
-            // 用于存储高亮元素
-            const highlightElements: HTMLElement[] = [];
-            
-            // 处理每个文本节点
-            textNodes.forEach((node, index) => {
-                const text = node.nodeValue || '';
-                const isFirst = index === 0;
-                const isLast = index === textNodes.length - 1;
-                
-                // 确定起始和结束偏移量
-                const startOffset = isFirst ? range.startOffset : 0;
-                const endOffset = isLast ? range.endOffset : text.length;
-                
-                // 创建高亮元素
-                const highlightSpan = iframeDoc.createElement('span');
-                highlightSpan.style.backgroundColor = rgbaColor;
-                highlightSpan.style.mixBlendMode = 'multiply';
-                highlightSpan.className = 'direct-highlight';
-                highlightSpan.style.display = 'inline';
-                highlightSpan.style.lineHeight = 'inherit';
-                
-                // 提取需要高亮的文本部分
-                const selectedText = text.substring(startOffset, endOffset);
-                
-                // 创建文本节点替换原始节点
-                const beforeText = iframeDoc.createTextNode(text.substring(0, startOffset));
-                const afterText = iframeDoc.createTextNode(text.substring(endOffset));
-                
-                // 创建高亮部分的文本节点
-                const highlightText = iframeDoc.createTextNode(selectedText);
-                highlightSpan.appendChild(highlightText);
-                
-                // 替换原始文本节点
-                const parent = node.parentNode;
-                if (parent) {
-                    // 插入高亮前的文本
-                    if (beforeText.length > 0) {
-                        parent.insertBefore(beforeText, node);
-                    }
-                    
-                    // 插入高亮元素
-                    parent.insertBefore(highlightSpan, node);
-                    
-                    // 插入高亮后的文本
-                    if (afterText.length > 0) {
-                        parent.insertBefore(afterText, node);
-                    }
-                    
-                    // 移除原始节点
-                    parent.removeChild(node);
-                }
-                
-                highlightElements.push(highlightSpan);
+            // 使用通用函数应用样式
+            applyStyleToRange(range, (element) => {
+                element.style.backgroundColor = rgbaColor;
+                element.style.mixBlendMode = 'multiply';
+                element.className = 'direct-highlight';
+                element.style.display = 'inline';
+                element.style.lineHeight = 'inherit';
             });
             
-            // 清除选区
             selection.removeAllRanges();
         }
         launchShowJudge.value = false;
     }
 
+    // 下划线
+    function underlineDoc(): void {
+        const iframe = rendition.value.manager.container.querySelector('iframe');
+        if (!iframe) return;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) return;
+
+        const selection = iframeDoc.getSelection();
+
+        if (selection && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            applyStyleToRange(range, (element) => {
+                element.style.textDecoration = 'underline';
+            });
+        }
+    }
+
+    // 加粗
+    function boldDoc(): void {
+        const iframe = rendition.value.manager.container.querySelector('iframe');
+        if (!iframe) return;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) return;
+
+        const selection = iframeDoc.getSelection();
+
+        if (selection && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            applyStyleToRange(range, (element) => {
+                element.style.fontWeight = '700';
+            });
+        }
+    }
+
+    // 斜体
+    function italicDoc(): void {
+        const iframe = rendition.value.manager.container.querySelector('iframe');
+        if (!iframe) return;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) return;
+
+        const selection = iframeDoc.getSelection();
+
+        if (selection && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            applyStyleToRange(range, (element) => {
+                element.style.fontStyle = 'italic';
+            });
+        }
+    }
+    
     // 获取选区内的所有文本节点
     function getTextNodesInRange(range: Range): Text[] {
         const textNodes: Text[] = [];
@@ -581,60 +631,21 @@
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    // 移除高亮
-    function removeDirectHighlights(iframeDoc: Document) {
-        const highlights = iframeDoc.querySelectorAll('.direct-highlight');
-        highlights.forEach(hl => {
-            const parent = hl.parentNode;
-            if (parent) {
-                // 将高亮内的文本移回父节点
-                while (hl.firstChild) {
-                    parent.insertBefore(hl.firstChild, hl);
-                }
-                parent.removeChild(hl);
-            }
-        });
-    }
+    // // 移除高亮
+    // function removeDirectHighlights(iframeDoc: Document) {
+    //     const highlights = iframeDoc.querySelectorAll('.direct-highlight');
+    //     highlights.forEach(hl => {
+    //         const parent = hl.parentNode;
+    //         if (parent) {
+    //             // 将高亮内的文本移回父节点
+    //             while (hl.firstChild) {
+    //                 parent.insertBefore(hl.firstChild, hl);
+    //             }
+    //             parent.removeChild(hl);
+    //         }
+    //     });
+    // }
 
-    function underlineDoc():void{
-        
-        const iframe = rendition.value.manager.container.querySelector('iframe');
-        if (!iframe) return;
-            
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!iframeDoc) return;
-            
-            const selection = iframeDoc.getSelection();
-            if (selection && !selection.isCollapsed) {
-                const range = selection.getRangeAt(0);
-                const contents = rendition.value.getContents()[0];
-                    
-                if (contents) {
-                    const cfiRange = contents.cfiFromRange(range);
-                    const selectedText = selection.toString();
-                
-                    if (cfiRange && selectedText) {
-                        
-                        rendition.value.annotations.add(
-                            'underline', 
-                            cfiRange, 
-                            {}, 
-                            null, 
-                            '', 
-                            {
-                                "border-bottom": "1px solid #FF0000", 
-                                "border-top": "none",
-                                "border-left": "none",
-                                "border-right": "none",
-                                "background-color": "transparent"
-                            }
-                        );
-                    }
-                }
-            }
-        launchShowJudge.value = false; 
-        selectShowJudge.value = false; 
-    }
 
 
 

@@ -8,12 +8,16 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Aichat: typeof import('./src/components/aichat.vue')['default']
+    Aitrans: typeof import('./src/components/aitrans.vue')['default']
     Aside: typeof import('./src/components/aside.vue')['default']
     AsideFrame: typeof import('./src/components/asideFrame.vue')['default']
     Book: typeof import('./src/components/book.vue')['default']
     BookCatalog: typeof import('./src/components/collapse/bookCatalog.vue')['default']
     BookFrame: typeof import('./src/components/collapse/bookFrame.vue')['default']
     BookViewer: typeof import('./src/components/bookViewer.vue')['default']
+    ChaiHis: typeof import('./src/components/collapse/chaiHis.vue')['default']
+    ChatHis: typeof import('./src/components/collapse/chatHis.vue')['default']
     Collapse: typeof import('./src/components/collapse.vue')['default']
     ElCollapse: typeof import('element-plus/es')['ElCollapse']
     ElCollapseItem: typeof import('element-plus/es')['ElCollapseItem']
@@ -35,5 +39,7 @@ declare module 'vue' {
     MainInterface: typeof import('./src/components/mainInterface.vue')['default']
     MainIntfc: typeof import('./src/components/mainIntfc.vue')['default']
     Reader: typeof import('./src/components/reader.vue')['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
+    RouterView: typeof import('vue-router')['RouterView']
   }
 }
