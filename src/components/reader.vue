@@ -100,47 +100,6 @@
         },
     }
 
-     // 保存注释到localStorage
-    // const saveAnnotations = () => {
-    //     localStorage.setItem('epubAnnotations', JSON.stringify(annotationsMap.value));
-    // };
-
-    // 添加新注释
-    // const addAnnotation = (cfiRange: string, content: string) => {
-    //     if (!annotationsMap.value[props.bookid]) {
-    //         annotationsMap.value[props.bookid] = [];
-    //     }
-        
-    //     const newAnnotation = {
-    //         cfiRange,
-    //         content,
-    //         styles: {
-    //             'fill': 'yellow',
-    //             'fill-opacity': '0.3',
-    //             'mix-blend-mode': 'multiply'
-    //         }
-    //     };
-        
-    //     annotationsMap.value[props.bookid].push(newAnnotation);
-    //     saveAnnotations();
-    //     return newAnnotation;
-    // };
-
-    // 恢复所有注释
-    // const restoreAnnotations = () => {
-    //     const annotations = loadAnnotations();
-    //     annotations.forEach((ann: any) => {
-    //         rendition.value.annotations.add(
-    //             'highlight',
-    //             ann.cfiRange,
-    //             {},
-    //             null,
-    //             'custom-highlight',
-    //             ann.styles
-    //         );
-    //     });
-    // };
-
     let color = ref('red')
     let colors = ref([
         '#FFFF00',
@@ -185,14 +144,6 @@
         }
     };
 
-    // // 从localStorage加载注释
-    // const loadAnnotations = () => {
-    //     const savedAnnotations = localStorage.getItem('epubAnnotations');
-    //     if (savedAnnotations) {
-    //         annotationsMap.value = JSON.parse(savedAnnotations);
-    //     }
-    //     return annotationsMap.value[props.bookid] || [];
-    // };
 
     // 初始化epub阅读器
     onMounted(async () => {
@@ -241,55 +192,7 @@
             const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
             if (!iframeDoc) return;
             
-            // iframeDoc.addEventListener('mouseup', function(e: MouseEvent) {
-            //     const selection = iframeDoc.getSelection();
-            //     if (selection && !selection.isCollapsed) {
-            //         // const range = selection.getRangeAt(0);
-            //         // const contents = rendition.value.getContents()[0];
-                    
-            //         // if (contents) {
-            //         //     const cfiRange = contents.cfiFromRange(range);
-            //         //     const selectedText = selection.toString();
-                    
-            //         //     if (cfiRange && selectedText) {
-            //         //         const newAnnotation = addAnnotation(cfiRange, selectedText);
-                            
-            //         //         rendition.value.annotations.add(
-            //         //             'highlight', 
-            //         //             cfiRange, 
-            //         //             {}, 
-            //         //             null, 
-            //         //             'custom-highlight', 
-            //         //             newAnnotation.styles
-            //         //         );
-            //         //     }
-            //         // }
-
-
-            //         // 修正首次未移动到鼠标处的问题
-            //         // selectShowJudge.value = false; // 先隐藏，强制触发DOM刷新
-            //         // setTimeout(() => {
-            //         //     // 获取选区的边界矩形
-            //         //     const range = selection.getRangeAt(0);
-            //         //     const rect = range.getBoundingClientRect();
-            //         //     // rect.left 是选区最左侧的屏幕坐标
-            //         //     select.value?.style.setProperty('top', `${rect.bottom + 10}px`);
-            //         //     select.value?.style.setProperty('left', `${rect.left}px`);
-            //         //     // 监听 selectionchange 事件，取消选中时隐藏 select
-            //         //     const hideSelect = () => {
-            //         //         if (iframeDoc.getSelection()?.isCollapsed) {
-            //         //             selectShowJudge.value = false;
-            //         //             iframeDoc.removeEventListener('selectionchange', hideSelect);
-            //         //         }
-            //         //     };
-            //         //     iframeDoc.addEventListener('selectionchange', hideSelect);
-            //         //     selectShowJudge.value = true;
-            //         // }, 0);
-
-            //         // selectShowJudge.value = true;
-            //         // contextmenu 事件监听已移至外部，避免重复绑定
-            //     }
-            // });
+        
 
 
 
@@ -308,35 +211,31 @@
 
                     // 获取iframe在页面中的位置
                     const iframeRect = iframe.getBoundingClientRect();
-
+                    selectShowJudge.value = true;
                     
-                    if (select.value) {
+                    if (select.value && viewer.value && launch.value) {
 
-                        selectShowJudge.value = true;
+                        
 
-                        // @ts-ignore
                         if(viewer.value?.clientWidth < 800){
-                            // @ts-ignore
                             select.value.style.left = `${viewer.value?.clientWidth / 2 - 152 }px`;
-                            // @ts-ignore
                             launch.value.style.left = `${viewer.value?.clientWidth / 2 - 152 }px`;
                         }else{
-                            // @ts-ignore
                             if(textRects[Object.entries(textRects).length - 1].left > viewer.value?.clientWidth / 2){
-                                // @ts-ignore
                                 select.value.style.left = `${viewer.value?.clientWidth / 4 * 3  - 152}px`;
-                                // @ts-ignore
                                 launch.value.style.left = `${viewer.value?.clientWidth / 4 * 3  - 152}px`;
                             }else{
-                                // @ts-ignore
-                                select.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`;        
-                                // @ts-ignore
+                                select.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`;    
                                 launch.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`;                          
                             }
                         }
                         select.value.style.top = `${textRects[Object.entries(textRects).length - 1].bottom + 40}px`;
-                        // @ts-ignore
-                        launch.value.style.top = `${textRects[Object.entries(textRects).length - 1].bottom + 90}px`;
+                        if(viewer.value?.clientHeight >= textRects[Object.entries(textRects).length - 1].bottom + 130){
+                            launch.value.style.top = `${textRects[Object.entries(textRects).length - 1].bottom + 90}px`;
+                        }else{
+                            launch.value.style.top = `${textRects[Object.entries(textRects).length - 1].bottom - 6}px`;
+                        }
+                        
                         
                         
                         

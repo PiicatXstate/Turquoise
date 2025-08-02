@@ -47,6 +47,7 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 `2025.7.29` 增加文章数据信息展示 完成选中右键位置自动计算和相关样式  
 `2025.7.30` EpubCFI的BUG过多，我更改了增加注释的方式，直接操作DOM，完成高亮  
 `2025.7.31` 完成大部分Turquoise AI的界面布局，接入API
+`2025.8.2` 搞了一天的python，解析了一下网页，做了关于查词的API
 
 ## 预览图
 主界面
@@ -59,8 +60,8 @@ Vue3 ( 框架 ) + Vite ( 构建工具 ) + Element-Plus ( UI组件库 )
 > Flow -https://app.flowoss.com/  
 > 提供页面布局、样式思路
 
->识典古籍 -https://www.shidianguji.com/  
+> 识典古籍 -https://www.shidianguji.com/  
 >提供功能设计思路
 
->硅基流动 - https://www.siliconflowcn.com/  
+> 硅基流动 - https://www.siliconflowcn.com/  
 >提供免费的 DeepSeek-R1-0528-Qwen3-8B
