@@ -3,8 +3,10 @@ import requests
 from bs4 import BeautifulSoup, Tag
 import re
 import json
+from flask_cors import CORS 
 
 app = Flask(__name__)
+CORS(app)
 
 def parse_word_html(soup):
     explanations = []
@@ -122,6 +124,7 @@ def dict_query(word):
             'detailed': str(basic_block)
         }
 
+print(dict_query('和'))
 @app.route('/query', methods=['GET'])
 def query():
     word = request.args.get('word')

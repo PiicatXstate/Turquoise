@@ -17,7 +17,7 @@
     import { ref , watch} from 'vue';
     import BookFrame from './collapse/bookCatalog.vue';
     import chatHis from './collapse/chatHis.vue';
-
+    
     import {collapsePart} from '@/stores/collapsePart'
     const clp = collapsePart()
     let part = ref(clp.part)
@@ -27,8 +27,7 @@
             part.value = newPart;
         }
     )
-
-
+    
 </script>
 
 <style scoped>

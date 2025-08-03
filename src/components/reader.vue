@@ -56,6 +56,21 @@
             </div>
             
         </div>
+
+        <div id="trans" ref="trans" v-show="transShowJudge">
+            <p class="word">{{ word }}</p>
+            <div class="zhanwei"></div>
+            <div class="allFrame" v-for="(list, key) in transData" :key="key">
+                <p class='pinyin'>{{ key }}</p>
+                <ul class="query">
+                    <li class="ans" v-for="(item, index) in list" :key="index">
+                    {{ item }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        
         
         
         
@@ -115,6 +130,7 @@
     const annotationsMap = ref<{[key: string]: any[]}>({});
     const select = ref<HTMLElement | null>(null);
     const launch = ref<HTMLElement | null>(null);
+    const trans = ref<HTMLElement | null>(null)
     // 初始化章节、页数和HTML文件路径
     const currentChapter = ref('加载中...');
     const currentPage = ref(0);
@@ -123,8 +139,28 @@
 
 
     let selectShowJudge = ref(false);
+    let transShowJudge = ref(false);
     let launchShowJudge = ref(false);
     let canNavigate = ref(true);    // 控制是否允许翻页的标志
+
+    let word = ref('')
+    let transData = ref({})
+
+    // 请求API
+    async function queryWord(word:string) {
+        try {
+            const response = await fetch(`http://localhost:5000/query?word=${encodeURIComponent(word)}`);
+            
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('查询出错:', error);
+        }
+    }
 
     // 处理窗口大小变化
     const handleResize = () => {
@@ -198,7 +234,7 @@
 
 
             // 触发编辑
-            iframeDoc.addEventListener('contextmenu', function(event: MouseEvent) {
+            iframeDoc.addEventListener('contextmenu', async function(event: MouseEvent) {
                 const selection = iframeDoc.getSelection();
                 const selectionText = selection ? selection.toString() : '';
                 if (selectionText) {
@@ -213,20 +249,24 @@
                     const iframeRect = iframe.getBoundingClientRect();
                     selectShowJudge.value = true;
                     
-                    if (select.value && viewer.value && launch.value) {
+                    // 设置位置
+                    if (select.value && viewer.value && launch.value && trans.value) {
 
                         
 
                         if(viewer.value?.clientWidth < 800){
                             select.value.style.left = `${viewer.value?.clientWidth / 2 - 152 }px`;
                             launch.value.style.left = `${viewer.value?.clientWidth / 2 - 152 }px`;
+                            trans.value.style.left = `${viewer.value?.clientWidth / 2 - 152 }px`;
                         }else{
                             if(textRects[Object.entries(textRects).length - 1].left > viewer.value?.clientWidth / 2){
                                 select.value.style.left = `${viewer.value?.clientWidth / 4 * 3  - 152}px`;
                                 launch.value.style.left = `${viewer.value?.clientWidth / 4 * 3  - 152}px`;
+                                trans.value.style.left = `${viewer.value?.clientWidth / 4 * 3  - 152}px`;
                             }else{
                                 select.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`;    
-                                launch.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`;                          
+                                launch.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`; 
+                                trans.value.style.left = `${viewer.value?.clientWidth / 4 * 1  - 152}px`;                                 
                             }
                         }
                         select.value.style.top = `${textRects[Object.entries(textRects).length - 1].bottom + 40}px`;
@@ -257,6 +297,27 @@
                             iframe.contentDocument?.addEventListener('click', closeSelect);
                         }, 0);
 
+                    };
+
+
+
+                    // 发送查词请求
+                    let qw =  await queryWord(selectionText);
+                    let ans = qw['results']['basic'];
+                    if(ans){
+                        transShowJudge.value = true;
+                        word.value = selectionText;
+                        Object.keys(ans).forEach(key => {
+                            let allContent = ''
+                            let num = 1
+                            // @ts-ignore
+                            ans[key].forEach(text => {
+                                allContent += (num + '. ' + text.match(/^(.*?)(?:。|：)/)[1] + ' ; ')
+                                num ++
+                            })
+                            ans[key] = [allContent]
+                        });
+                        transData.value = ans
                     }
 
                 }
@@ -684,6 +745,64 @@
         z-index: 500;
         display: flex;
     }
+    #trans{
+        position: absolute;
+        width: 274px;
+        padding-left: 15px;
+        padding-right: 15px;
+        background-color: rgb(255, 255, 255);
+        box-shadow: 0 0 4px rgba(0,0,0,0.3);
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        z-index: 500;
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .word {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        font-family: 'Aa古典刻本宋';
+    }
+
+    .zhanwei {
+        background-color: #eee;
+    }
+
+    .allFrame {
+        margin-bottom: 20px;
+    }
+
+    .pinyin {
+        font-size: 16px;
+        color: #2d9e93;
+        margin-bottom: 8px;
+    }
+
+    .query {
+        list-style-type: none;
+        padding-left: 20px;
+        margin: 0;
+    }
+
+    .ans {
+        font-size: 14px;
+        color: #444;
+        line-height: 1.6;
+        margin-bottom: 5px;
+        position: relative;
+    }
+
+    .ans:before {
+        content: "•";
+        color: #999;
+        position: absolute;
+        left: -15px;
+    }
+
+
 
     /* 居中 */
     #color{
@@ -702,9 +821,6 @@
         margin-left: 6px;
         margin-right: 6px;
     }
-
-
-
 
 
 
