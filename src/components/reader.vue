@@ -146,6 +146,20 @@
     let word = ref('')
     let transData = ref({})
 
+    // 转数字为数字序号
+    function toOrdinalNumber(num:number) {
+        const ordinalChars = [
+            '⑴', '⑵', '⑶', '⑷', '⑸', '⑹', '⑺', '⑻', '⑼', '⑽',
+            '⑾', '⑿', '⒀', '⒁', '⒂', '⒃', '⒄', '⒅', '⒆', '⒇'
+        ];
+        
+        if (num >= 1 && num <= 20) {
+            return ordinalChars[num - 1];
+        } else {
+            // 对于大于20的数字，可以返回带括号的普通数字
+            return `⑴${num}`;
+        }
+    }
     // 请求API
     async function queryWord(word:string) {
         try {
@@ -312,7 +326,7 @@
                             let num = 1
                             // @ts-ignore
                             ans[key].forEach(text => {
-                                allContent += (num + '. ' + text.match(/^(.*?)(?:。|：)/)[1] + ' ; ')
+                                allContent += (toOrdinalNumber(num) + ' ' + text.match(/^(.*?)(?:。|：)/)[1] + ' ')
                                 num ++
                             })
                             ans[key] = [allContent]
@@ -745,53 +759,60 @@
         z-index: 500;
         display: flex;
     }
-    #trans{
+    #trans {
         position: absolute;
         width: 274px;
-        padding-left: 15px;
-        padding-right: 15px;
+        padding: 8px 12px; /* 更小的内边距 */
         background-color: rgb(255, 255, 255);
-        box-shadow: 0 0 4px rgba(0,0,0,0.3);
-        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        border-radius: 8px;
         backdrop-filter: blur(20px);
         z-index: 500;
         display: flex;
         flex-direction: column;
+        /* 使用绝对定位精确控制位置 */
+        top: 0;
+        left: 0;
     }
 
-
     .word {
-        font-size: 24px;
+        font-size: 22px; /* 稍微缩小字体 */
         font-weight: bold;
         color: #333;
         font-family: 'Aa古典刻本宋';
-    }
-
-    .zhanwei {
-        background-color: #eee;
-    }
-
-    .allFrame {
-        margin-bottom: 20px;
+        margin: 0 0 4px 0; /* 更小的上下间距 */
+        padding: 0;
     }
 
     .pinyin {
-        font-size: 16px;
+        font-size: 14px;
         color: #2d9e93;
-        margin-bottom: 8px;
+        margin: 0 0 4px 0; /* 更小的上下间距 */
+        padding: 0;
+    }
+
+    .allFrame {
+        margin: 0 0 4px 0; /* 更小的间距 */
+        padding: 0;
+    }
+
+    .pinyin {
+        margin-bottom: 2px; /* 最小间距 */
     }
 
     .query {
         list-style-type: none;
-        padding-left: 20px;
+        padding: 0 0 0 15px; /* 更小的左缩进 */
         margin: 0;
+        line-height: 1.2; /* 更紧密的行高 */
     }
 
     .ans {
-        font-size: 14px;
+        font-size: 13px;
         color: #444;
-        line-height: 1.6;
-        margin-bottom: 5px;
+        line-height: 1.2; /* 更紧密的行高 */
+        margin: 0 0 2px 0; /* 更小的间距 */
+        padding: 0;
         position: relative;
     }
 
@@ -799,10 +820,10 @@
         content: "•";
         color: #999;
         position: absolute;
-        left: -15px;
+        left: -12px;
+        top: 0;
+        font-size: 13px;
     }
-
-
 
     /* 居中 */
     #color{

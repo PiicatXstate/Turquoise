@@ -124,7 +124,6 @@ def dict_query(word):
             'detailed': str(basic_block)
         }
 
-print(dict_query('和'))
 @app.route('/query', methods=['GET'])
 def query():
     word = request.args.get('word')
