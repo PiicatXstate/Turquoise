@@ -19,7 +19,7 @@
 
 <script lang="ts" setup>
     import { defineProps, computed, ref } from 'vue';
-    import epubStorage from '../epubStorage.ts';
+    import epubStorage from '../utils/epubStorage.ts';
 
     const props = defineProps(['bookid']);
     const bookInfo = await epubStorage.getBookInfo(props.bookid || 'mdgxkpvxr9a850k1vsd');

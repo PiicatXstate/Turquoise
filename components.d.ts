@@ -38,6 +38,7 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     MainInterface: typeof import('./src/components/mainInterface.vue')['default']
     MainIntfc: typeof import('./src/components/mainIntfc.vue')['default']
+    QueryFrame: typeof import('./src/components/queryFrame.vue')['default']
     Reader: typeof import('./src/components/reader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

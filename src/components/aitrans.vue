@@ -218,6 +218,7 @@ const processStreamResponse = async (reader: ReadableStreamDefaultReader, aiMsgI
       }
     }
   } catch (error) {
+    // @ts-ignore
     if (error.name !== 'AbortError') {
       console.error('流读取错误:', error);
       const aiMsg = messages.value.find(msg => msg.id === aiMsgId);
@@ -291,6 +292,7 @@ const fetchAIStreamResponse = async (userInput: string) => {
     }
     
   } catch (error) {
+    // @ts-ignore
     if (error.name !== 'AbortError') {
       console.error('API调用错误:', error);
       const aiMsg = messages.value.find(msg => msg.id === messageIdCounter);

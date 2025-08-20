@@ -32,7 +32,7 @@
             <EditOutlined id="edit" @click="addNote"/> 
             <p id="editText">注释</p>
 
-            <ProjectOutlined id="project"/> 
+            <ProjectOutlined id="project" @click="queryWords"/> 
             <p id="projectText">查词</p>
 
             <OneToOneOutlined id="onetoone"/> 
@@ -87,9 +87,10 @@
 
 <script setup lang="ts">
     import { defineProps, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
-    import epubStorage from '../epubStorage.ts';
+    import epubStorage from '../utils/epubStorage.ts';
     import Epub from 'epubjs';
     import { bookOBJ } from '@/stores/bookOBJ.ts';
+    import { queryContents } from '@/stores/queryContents.ts';
     import { ElMessage } from 'element-plus'
     import { Close } from '@element-plus/icons-vue'
     import { 
@@ -214,6 +215,7 @@
             );
         }
     };
+
 
     // 设置ResizeObserver
     const setupResizeObserver = () => {
@@ -784,6 +786,8 @@
                             transShowJudge.value = true;
                         }
                     }
+                    const user = queryContents()
+                    user.content = qw['results']['detailed']
                 }
             });
         });
@@ -794,10 +798,10 @@
                 // 如果当前不允许导航，直接返回
                 if (!canNavigate.value) return;
                 
-                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'l') {
+                if (e.key === 'ArrowRight') {
                     canNavigate.value = false; // 禁止导航直到新页面渲染完成
                     rendition.value?.next();
-                } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'h') {
+                } else if (e.key === 'ArrowLeft') {
                     canNavigate.value = false; // 禁止导航直到新页面渲染完成
                     rendition.value?.prev();
                 } else if (e.key === 'Escape') {
@@ -826,6 +830,10 @@
     // 关闭阅读器
     function closeReader() {
         // 可以在这里添加清理逻辑
+        const bookUser = bookOBJ()
+        bookUser.Showtype = 'MAIN';
+        bookUser.book = undefined;
+        bookUser.changeMenu = undefined;
     }
 
     // 复制
@@ -876,6 +884,12 @@
     // 斜体
     function italicDoc(): void {
         saveCurrentSelection('italic');
+    }
+
+    // 弹出查词
+    function queryWords(): void{
+        const user = queryContents()
+        user.show = true
     }
     
     // 数据查找

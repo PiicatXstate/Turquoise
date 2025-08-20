@@ -37,8 +37,10 @@
 
             <el-splitter-panel size="0">
                 <el-splitter layout="vertical" style="overflow: hidden;">
-                    <el-splitter-panel size="0">
-                        <div class="demo-panel">Query</div>
+                    <el-splitter-panel size="0" v-if="queryshow">
+                        <div class="demo-panel">
+                            <queryFrame/>
+                        </div>
                     </el-splitter-panel>
                     <el-splitter-panel>
                         <div class="demo-panel">
@@ -55,23 +57,35 @@
 
 
 <script lang="ts" setup>
-    import { ref } from 'vue';
-    import {collapsePart} from '@/stores/collapsePart'
+    import { collapsePart } from '@/stores/collapsePart'
+    import { queryContents } from '@/stores/queryContents';
+    import { ref , watch } from 'vue';
+
 
     let foldState = ref(true)
 
+    const user = queryContents();
+    let queryshow = ref(user.show);
+    watch(() => user.show, (newContent) => {
+        queryshow.value = newContent
+    });
+    
     // 显示Part逻辑
     function handleClick(payload:any){
+
         let part = collapsePart()
         if(payload == part.part && foldState.value){
             foldState.value = !foldState.value
             part.part = ''
+
         }else if(payload !== part.part && !foldState.value){
             foldState.value = !foldState.value
             part.part = payload
+
         }else{
             part.part = payload
         }
+
     }
 </script>
 
@@ -84,6 +98,7 @@
     import bookFrame from './components/collapse/bookCatalog.vue';
     import chatHis from './components/collapse/chatHis.vue';
     import aitrans from './components/aitrans.vue';
+    import queryFrame from './components/queryFrame.vue';
 
 
     function refuseScreenSize(){
@@ -102,7 +117,8 @@
             bookFrame,
             collapse,
             aitrans,
-            chatHis
+            chatHis,
+            queryFrame
         }
     }
 

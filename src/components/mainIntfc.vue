@@ -31,14 +31,16 @@
 
 
 <script setup lang="ts">
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, watch } from 'vue';
     import { ElMessage } from 'element-plus'
     import Epub from 'epubjs';
-    import epubStorage from '../epubStorage.ts';
+    import epubStorage from '../utils/epubStorage.ts';
     import { fa } from 'element-plus/es/locales.mjs';
+    import { bookOBJ } from '@/stores/bookOBJ.ts';
 
     // 展示模式
-    let Showtype = ref('MAIN')
+    const bookObj = bookOBJ()
+    let Showtype = ref(bookObj.Showtype)
     let ShowBookID = ref('')
 
     // 初始化元素
@@ -55,8 +57,14 @@
     // 点击小说事件
     const handleBookClick = (bookid: string) => {
         Showtype.value = 'READER'
+        bookObj.Showtype = 'READER'
         ShowBookID.value = bookid
     };
+
+    // 变化
+    watch(()=>bookObj.Showtype,(newType)=>{
+        Showtype.value = newType
+    })
 
 
     // 此下为提交表单的逻辑

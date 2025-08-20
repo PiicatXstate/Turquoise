@@ -71,6 +71,8 @@
                     data.value.push(renameSubitemsToChildren(chapter))
                 })
             });
+        }else{
+            data.value = []
         }
     });
 
