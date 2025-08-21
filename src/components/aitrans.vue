@@ -1,7 +1,8 @@
 <template>
   <McLayout class="container">
+    <!-- 启动页 - 当没有消息时显示 -->
     <McLayoutContent
-      v-if="startPage"
+      v-if="showStartPage"
       class="content-main start-page-content">
       <McIntroduction
         :title="'Turquoise AI'"
@@ -17,9 +18,10 @@
       </McPrompt>
     </McLayoutContent>
 
+    <!-- 聊天内容 -->
     <McLayoutContent class="content-main" v-else>
       <div class="message-container">
-        <template v-for="(msg, idx) in messages" :key="idx">
+        <template v-for="(msg, idx) in currentMessages" :key="idx">
           <McBubble
             v-if="msg.from === 'user'"
             :content="msg.content"
@@ -55,7 +57,7 @@
 
     <div class="shortcut" style="display: flex; align-items: center; gap: 8px">
       <McPrompt
-        v-if="!startPage && !isLoading"
+        v-if="!showStartPage && !isLoading"
         :list="simplePrompt"
         :direction="'horizontal'"
         style="flex: 1"
@@ -78,10 +80,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Button } from 'vue-devui';
+import { ref, computed, onMounted } from 'vue';
+import { useChatStore } from '@/stores/chatStore';
 
-// API配置
+// 初始化Pinia Store
+const chatStore = useChatStore();
+chatStore.loadFromStorage();
+
+// API配置 - 修复末尾空格问题
 const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 const API_KEY = 'sk-lbtjhwrjebrwhwttikwrkasfwcbsijbuojzlizzihmoksyca';
 const MODEL = 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B';
@@ -119,20 +125,19 @@ const simplePrompt = [{
   label: '请总结一下这本书的内容',
 }];
 
-const startPage = ref(true);
-const inputValue = ref('');
-const messages = ref<any[]>([]);
+// 从Store获取状态
+const showStartPage = computed(() => chatStore.showStartPage);
+const currentMessages = computed(() => chatStore.currentSession?.messages || []);
 const isLoading = ref(false);
-let messageIdCounter = 0;
+const inputValue = ref('');
+
 let abortController: AbortController | null = null;
 let startTime: number = 0;
+let currentAiMessageId: number | null = null;
 
 // 切换think部分的显示
 const toggleThink = (id: number) => {
-  const msg = messages.value.find(m => m.id === id);
-  if (msg) {
-    msg.showThink = !msg.showThink;
-  }
+  chatStore.toggleThink(id);
 };
 
 // 按钮文字
@@ -153,66 +158,68 @@ const stopGeneration = () => {
     abortController.abort();
     isLoading.value = false;
     abortController = null;
-    
-    // 更新最后一条消息
-    const aiMsg = messages.value.find(msg => msg.id === messageIdCounter);
-    if (aiMsg && aiMsg.content === '思考中...') {
-      aiMsg.content = '生成已停止';
-    }
   }
 };
 
 // 处理流式响应
-const processStreamResponse = async (reader: ReadableStreamDefaultReader, aiMsgId: number) => {
+const processStreamResponse = async (reader: ReadableStreamDefaultReader) => {
   const decoder = new TextDecoder();
-  let reasoningContent = '';
-  let normalContent = '';
-  let isReasoningComplete = false;
+  let fullContent = ''; // 用于存储完整内容
+  let reasoningContent = ''; // 用于存储思考内容
+  let answerContent = ''; // 用于存储最终回答
   
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       
-      const chunk = decoder.decode(value);
+      const chunk = decoder.decode(value, { stream: true });
       const lines = chunk.split('\n').filter(line => line.trim() !== '');
       
       for (const line of lines) {
-        if (line === 'data: [DONE]') break;
+        // 处理各种可能的[DONE]标记
+        if (line.trim() === ' [DONE]' || 
+            line.trim() === '[DONE]' || 
+            line.trim() === '[DONE]' ||
+            line.trim() === ' [DONE] ') {
+          break;
+        }
         
-        if (line.startsWith('data:')) {
-          const jsonStr = line.replace('data: ', '');
+        if (line.startsWith('')) {
+          const jsonStr = line.replace('data: ', '').trim();
+          
           try {
             const data = JSON.parse(jsonStr);
+            const contentDelta = data.choices?.[0]?.delta?.content || '';
             
-            // 获取AI回复内容和思考内容
-            const contentDelta = data.choices[0]?.delta?.content || '';
-            const reasoningDelta = data.choices[0]?.delta?.reasoning_content || '';
-            
-            // 更新思考内容
-            if (reasoningDelta) {
-              reasoningContent += reasoningDelta;
-              const aiMsg = messages.value.find(msg => msg.id === aiMsgId);
-              if (aiMsg) {
-                aiMsg.reasoningContent = reasoningContent;
-              }
-            }
-            
-            // 更新正常内容
             if (contentDelta) {
-              // 当开始正常内容时，标记思考过程结束
-              if (!isReasoningComplete && reasoningContent) {
-                isReasoningComplete = true;
-              }
-              normalContent += contentDelta;
+              fullContent += contentDelta;
               
-              const aiMsg = messages.value.find(msg => msg.id === aiMsgId);
-              if (aiMsg) {
-                aiMsg.content = normalContent;
+              // 关键修复：使用</think>作为分隔符
+              const separator = '</think>';
+              const separatorIndex = fullContent.indexOf(separator);
+              
+              if (separatorIndex !== -1) {
+                // 找到分隔符，已经可以分离思考内容和回答
+                reasoningContent = fullContent.substring(0, separatorIndex);
+                answerContent = fullContent.substring(separatorIndex + separator.length);
+              } else {
+                // 还没找到分隔符，全部视为思考内容
+                reasoningContent = fullContent;
+                answerContent = '';
+              }
+              
+              // 更新Store
+              if (currentAiMessageId !== null) {
+                chatStore.updateMessageContent(
+                  currentAiMessageId, 
+                  answerContent, 
+                  reasoningContent
+                );
               }
             }
           } catch (error) {
-            console.error('解析JSON错误:', error);
+            console.error('解析JSON错误:', error, '原始数据:', jsonStr);
           }
         }
       }
@@ -221,25 +228,45 @@ const processStreamResponse = async (reader: ReadableStreamDefaultReader, aiMsgI
     // @ts-ignore
     if (error.name !== 'AbortError') {
       console.error('流读取错误:', error);
-      const aiMsg = messages.value.find(msg => msg.id === aiMsgId);
-      if (aiMsg) {
-        aiMsg.content = '抱歉，处理您的请求时出错。请稍后再试。';
+      if (currentAiMessageId !== null) {
+        chatStore.updateMessageContent(
+          currentAiMessageId, 
+          '抱歉，处理您的请求时出错。请稍后再试。',
+          reasoningContent
+        );
       }
     }
   } finally {
+    // 确保最终内容正确
+    if (currentAiMessageId !== null && reasoningContent && !answerContent) {
+      // 如果有思考内容但没有回答内容，可能是格式问题
+      // 尝试查找其他可能的分隔符
+      const alternativeSeparator = '<br><br>';
+      const separatorIndex = reasoningContent.indexOf(alternativeSeparator);
+      
+      if (separatorIndex !== -1) {
+        answerContent = reasoningContent.substring(separatorIndex + alternativeSeparator.length);
+        reasoningContent = reasoningContent.substring(0, separatorIndex);
+        
+        chatStore.updateMessageContent(
+          currentAiMessageId, 
+          answerContent, 
+          reasoningContent
+        );
+      }
+    }
+    
     // 计算思考时间
     const endTime = Date.now();
     const thinkTime = ((endTime - startTime) / 1000).toFixed(1);
     
-    // 更新AI消息
-    const aiMsg = messages.value.find(msg => msg.id === aiMsgId);
-    if (aiMsg) {
-      aiMsg.thinkTime = thinkTime;
-      aiMsg.showThink = false;
+    if (currentAiMessageId !== null) {
+      chatStore.setThinkTime(currentAiMessageId, parseFloat(thinkTime));
     }
     
     isLoading.value = false;
     abortController = null;
+    currentAiMessageId = null;
   }
 };
 
@@ -251,18 +278,10 @@ const fetchAIStreamResponse = async (userInput: string) => {
     abortController = new AbortController();
     
     // 构建对话历史
-    const conversationHistory = messages.value
-      .filter(msg => msg.from !== 'model' || msg.id !== messageIdCounter)
-      .map(msg => ({
-        role: msg.from === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-    
-    // 添加当前用户消息
-    conversationHistory.push({
-      role: 'user',
-      content: userInput
-    });
+    const conversationHistory = currentMessages.value.map(msg => ({
+      role: msg.from === 'user' ? 'user' : 'assistant',
+      content: msg.content
+    }));
     
     // 调用API
     const response = await fetch(API_URL, {
@@ -276,28 +295,32 @@ const fetchAIStreamResponse = async (userInput: string) => {
         messages: conversationHistory,
         max_tokens: 2000,
         temperature: 0.7,
-        stream: true  // 启用流式输出
+        stream: true
       }),
       signal: abortController.signal
     });
     
     if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`API请求失败: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
     // 处理流式响应
     const reader = response.body?.getReader();
     if (reader) {
-      await processStreamResponse(reader, messageIdCounter);
+      await processStreamResponse(reader);
     }
     
   } catch (error) {
     // @ts-ignore
     if (error.name !== 'AbortError') {
       console.error('API调用错误:', error);
-      const aiMsg = messages.value.find(msg => msg.id === messageIdCounter);
-      if (aiMsg) {
-        aiMsg.content = '抱歉，处理您的请求时出错。请稍后再试。';
+      if (currentAiMessageId !== null) {
+        chatStore.updateMessageContent(
+          currentAiMessageId, 
+          '抱歉，处理您的请求时出错。请稍后再试。',
+          ''
+        );
       }
       isLoading.value = false;
     }
@@ -306,35 +329,50 @@ const fetchAIStreamResponse = async (userInput: string) => {
 
 const onSubmit = (content: string) => {
   const userInput = content || inputValue.value;
-  if (!userInput.trim()) return;
+  if (!userInput.trim() || isLoading.value) return;
   
   inputValue.value = '';
-  startPage.value = false;
   
   // 添加用户消息
-  messages.value.push({
-    id: messageIdCounter++,
+  chatStore.addMessage({
+    id: Date.now(),
     from: 'user',
     content: userInput,
   });
   
+  // 更新会话标题（如果是新会话）
+  if (chatStore.currentSession?.messages.length === 1) {
+    chatStore.updateTitle(userInput);
+  }
+  
   // 添加AI消息占位符
-  messages.value.push({
-    id: messageIdCounter,
+  const aiMessage = {
+    id: Date.now() + 1,
     from: 'model',
     content: '思考中...',
     reasoningContent: '',
     showThink: false,
     thinkTime: 0
-  });
+  };
+  // @ts-ignore
+  chatStore.addMessage(aiMessage);
+  currentAiMessageId = aiMessage.id;
   
-  // 调用API获取AI回复（流式）
+  // 调用API获取AI回复
   fetchAIStreamResponse(userInput);
 };
+
+// 页面加载时初始化
+onMounted(() => {
+  // 确保至少有一个会话
+  if (!chatStore.currentSessionId) {
+    chatStore.createNewSession();
+  }
+});
 </script>
 
 <style>
-/* 原有样式 */
+/* 保持原有样式不变 */
 .container {
   width: 100%;
   margin: 20px auto;
@@ -379,7 +417,7 @@ const onSubmit = (content: string) => {
 }
 
 /* think按钮样式 */
-.think-toggle-btn {
+.message-container .think-toggle-btn {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -392,27 +430,39 @@ const onSubmit = (content: string) => {
   font-size: 14px;
   color: #1e6bb8;
   transition: background-color 0.3s;
+  position: relative;
+  z-index: 10;
 }
 
-.think-toggle-btn:hover {
+.message-container .think-toggle-btn:hover {
   background-color: #d0e8ff;
 }
 
-.think-toggle-btn i {
+.message-container .think-toggle-btn i {
   font-size: 14px;
 }
 
-/* 思考内容样式 */
-.think-content {
-  background-color: #f9f9f9;
-  border-left: 4px solid #3498db;
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border-radius: 0 4px 4px 0;
-  white-space: pre-wrap; /* 保留换行 */
-  font-size: 14px;
-  line-height: 1.6;
-  color: #333;
+/* 修复思考内容样式 */
+.message-container .think-content {
+  background-color: #f9f9f9 !important;
+  border-left: 4px solid #3498db !important;
+  padding: 12px 15px !important;
+  margin: 10px 0 !important;
+  border-radius: 0 4px 4px 0 !important;
+  white-space: pre-wrap !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: #333 !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* 确保思考内容与Markdown内容之间有足够的间距 */
+.message-container .think-content + .mc-markdown-card {
+  margin-top: 15px !important;
 }
 
 /* 加载指示器 */
@@ -453,14 +503,14 @@ const onSubmit = (content: string) => {
     text-align: center;
   }
 
-  .think-toggle-btn {
+  .message-container .think-toggle-btn {
     padding: 5px 8px;
     font-size: 12px;
   }
   
-  .think-content {
-    padding: 10px;
-    font-size: 13px;
+  .message-container .think-content {
+    padding: 10px !important;
+    font-size: 13px !important;
   }
 }
 
@@ -473,14 +523,14 @@ const onSubmit = (content: string) => {
     border: none;
   }
   
-  .think-toggle-btn {
+  .message-container .think-toggle-btn {
     width: 100%;
     justify-content: center;
   }
   
-  .think-content {
-    font-size: 12px;
-    padding: 8px;
+  .message-container .think-content {
+    font-size: 12px !important;
+    padding: 8px !important;
   }
   
   .loading-indicator {

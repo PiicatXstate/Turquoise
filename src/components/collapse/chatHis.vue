@@ -1,170 +1,290 @@
 <template>
-  <h1 class="title">对话记录</h1>
-  <div class="frame">
-    <div 
-        v-for="(name, index) in chatNameList" 
-        :key="index" 
-        class="hisFrame"
-        @mouseleave="closeMenu(index)"
-    >
-        <p class="chatName">{{ name }}</p>
-        <el-icon class="icon" @click.stop="toggleMenu(index)">
-        <MoreFilled />
-        </el-icon>
-        
+  <div class="chat-history-container" ref="containerRef">
+    <h1 class="title">对话记录</h1>
+    <div class="frame">
+      <div
+        v-for="(session, index) in allSessions"
+        :key="session.id"
+        class="his-frame"
+      >
+        <!-- 聊天项 -->
         <div 
-        v-if="activeIndex === index" 
-        class="select"
-        @click.stop
+          class="chat-item" 
+          :class="{ active: currentSessionId === session.id }"
+          @click="selectChat(session.id)"
         >
-        <p class="rename" @click="renameChat(index)">重命名</p>
-        <p class="delete" @click="deleteChat(index)">删除</p>
+          <span class="chat-name">{{ session.title }}</span>
+          <el-icon class="more-icon" @click.stop="toggleMenu(session.id)">
+            <MoreFilled />
+          </el-icon>
         </div>
+
+        <transition name="fade">
+          <div
+            v-if="activeSessionId === session.id"
+            class="action-menu"
+            @click.stop
+          >
+            <div class="menu-item rename" @click="renameChat(session.id)">
+              <el-icon><Edit /></el-icon>
+              <span>重命名</span>
+            </div>
+            <div class="menu-item delete" @click="deleteChat(session.id)">
+              <el-icon><Delete /></el-icon>
+              <span>删除</span>
+            </div>
+          </div>
+        </transition>
+      </div>
+      
+      <!-- 创建新对话按钮 -->
+      <div class="new-chat-btn" @click="createNewSession">
+        <el-icon><Plus /></el-icon>
+        <span>新建对话</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { MoreFilled } from '@element-plus/icons-vue';
-import { ref } from 'vue';
+import { MoreFilled, Edit, Delete, Plus } from '@element-plus/icons-vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useChatStore } from '@/stores/chatStore';
 
-// 保持原始数据结构不变
-let chatNameList = ref([
-  '新的聊天1',
-  '新的聊天2'
-]);
+const chatStore = useChatStore();
+const activeSessionId = ref<string | null>(null);
+const containerRef = ref<HTMLElement | null>(null);
 
-const activeIndex = ref(-1);
+// 从Store获取状态
+const allSessions = computed(() => chatStore.allSessions);
+const currentSessionId = computed(() => chatStore.currentSessionId);
 
-// 切换菜单显示状态
-const toggleMenu = (index: number) => {
-  activeIndex.value = activeIndex.value === index ? -1 : index;
+// 切换菜单
+const toggleMenu = (sessionId: string) => {
+  activeSessionId.value = activeSessionId.value === sessionId ? null : sessionId;
 };
 
-// 关闭指定菜单
-const closeMenu = (index: number) => {
-  if (activeIndex.value === index) {
-    activeIndex.value = -1;
+// 重命名
+const renameChat = (sessionId: string) => {
+  const session = chatStore.sessions.find(s => s.id === sessionId);
+  const newName = prompt('请输入新的聊天名称', session?.title || '新对话');
+  if (newName && newName.trim()) {
+    chatStore.renameSession(sessionId, newName.trim());
   }
+  activeSessionId.value = null;
 };
 
-// 重命名聊天
-const renameChat = (index: number) => {
-  const newName = prompt('请输入新的聊天名称', chatNameList.value[index]);
-  if (newName) {
-    chatNameList.value[index] = newName;
-  }
-  activeIndex.value = -1;
-};
-
-// 删除聊天
-const deleteChat = (index: number) => {
+// 删除
+const deleteChat = (sessionId: string) => {
   if (confirm('确定要删除这个聊天记录吗？')) {
-    chatNameList.value.splice(index, 1);
+    chatStore.deleteSession(sessionId);
   }
-  activeIndex.value = -1;
+  activeSessionId.value = null;
 };
-</script>
 
-<script lang="ts">
-export default {
-  name: 'chatHis'
-}
+const selectChat = (sessionId: string) => {
+  chatStore.switchSession(sessionId);
+  activeSessionId.value = null;
+};
+
+const createNewSession = () => {
+  chatStore.createNewSession();
+  activeSessionId.value = null;
+};
+
+// 点击外部关闭菜单
+const handleClickOutside = (e: MouseEvent) => {
+  if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
+    activeSessionId.value = null;
+  }
+};
+
+onMounted(() => {
+  // 确保加载历史记录
+  if (chatStore.sessions.length === 0) {
+    chatStore.loadFromStorage();
+  }
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style scoped>
+.chat-history-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .title {
   font-size: 16px;
-  position: absolute;
-  left: 15px;
-  top: 0px;
-  color: rgb(2, 52, 72);
-}
-
-.frame{
-    position: absolute;
-    top: 30px;
-    height: 100%;
-    width: 100%;
-}
-/* 聊天项容器 */
-.hisFrame {
-  position: relative;
-  margin: 8px 0;
-  margin-left: 3%;
-  width: 94%;
-  height: 33px;
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-.hisFrame:hover {
-  background-color: rgba(0, 0, 0, 0.03);
-}
-
-.chatName {
-  position: absolute;
-  font-size: 15px;
-  top: 8px;
-  left: 10px;
+  font-weight: 600;
+  color: #1e293b;
+  padding-left: 14px;
+  padding-top: 11px;
+  padding-bottom: 0px;
   margin: 0;
-  width: calc(100% - 40px);
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.frame {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  background: rgba(0, 0, 0, 0);
+  scrollbar-width: thin;
+  scrollbar-color: #c1c9d2 #f1f5f9;
+}
+
+.frame::-webkit-scrollbar {
+  width: 6px;
+}
+.frame::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.frame::-webkit-scrollbar-thumb {
+  background: #c1c9d2;
+  border-radius: 10px;
+}
+.frame::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* 每个聊天项容器：相对定位，用于菜单定位 */
+.his-frame {
+  position: relative;
+  margin: 4px 12px;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  user-select: none;
+  background: #f8fafc;
+}
+
+.chat-item.active {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  font-weight: 500;
+}
+
+.chat-item:hover {
+  background: #edf2f7;
+  color: #1a202c;
+}
+
+.chat-name {
+  flex: 1;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 500;
 }
 
-.icon {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  color: rgba(0, 0, 0, 0.2);
-  font-size: 17px;
-  cursor: pointer;
+.more-icon {
+  color: #94a3b8;
+  font-size: 18px;
+  opacity: 0;
+  transition: all 0.2s ease;
 }
 
-.icon:hover {
-  color: rgba(0, 0, 0, 0.5);
+.chat-item:hover .more-icon {
+  opacity: 1;
 }
 
 /* 操作菜单 */
-.select {
+.action-menu {
   position: absolute;
-  background-color: rgba(255, 255, 255, 0.95);
-  width: 80px;
-  height: 62px;
-  border-radius: 6px;
-  right: 10px;
-  top: 35px;
-  z-index: 100;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #ebeef5;
+  top: 100%;
+  right: 0;
+  width: 120px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 10;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+  margin-top: 4px;
 }
 
-.rename, .delete {
-  position: absolute;
-  font-size: 14px;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  color: #606266;
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #475569;
   cursor: pointer;
-  margin: 0;
-  padding: 6px 0;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
-.rename {
-  top: 6px;
+.menu-item:hover {
+  background: #f1f5f9;
+  color: #2563eb;
 }
 
-.delete {
-  top: 30px;
+.menu-item .el-icon {
+  margin-right: 8px;
+  font-size: 14px;
 }
 
-.rename:hover, .delete:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
+.menu-item.rename .el-icon {
+  color: #059669;
 }
 
+.menu-item.delete .el-icon {
+  color: #dc2626;
+}
+
+/* 新建对话按钮 */
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  margin: 4px 12px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.new-chat-btn:hover {
+  background: #edf2f7;
+  color: #1a202c;
+}
+
+.new-chat-btn .el-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* 淡入淡出动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
