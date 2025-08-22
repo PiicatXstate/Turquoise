@@ -4,6 +4,7 @@
     <div class="frame" v-if=" (Showtype=='MAIN')?true:false">
         <h1 class="title">藏书楼阁</h1>
         <button class="upload" @click="handleUploadClick">导入</button>
+        <button class="template" @click="loadTemplateFile">导入模板</button>
         <input 
             type="file" 
             id="fileInput"
@@ -35,7 +36,6 @@
     import { ElMessage } from 'element-plus'
     import Epub from 'epubjs';
     import epubStorage from '../utils/epubStorage.ts';
-    import { fa } from 'element-plus/es/locales.mjs';
     import { bookOBJ } from '@/stores/bookOBJ.ts';
 
     // 展示模式
@@ -71,6 +71,35 @@
 
     const handleUploadClick = () => {
         fileInput.value?.click();
+    };
+
+    // 新增：加载模板文件功能
+    const loadTemplateFile = async () => {
+        try {
+            // 从public目录获取模板文件
+            const response = await fetch('/古文观止.epub');
+            if (!response.ok) {
+                throw new Error('模板文件加载失败');
+            }
+            
+            // 将响应转换为ArrayBuffer
+            const arrayBuffer = await response.arrayBuffer();
+            
+            // 使用epubStorage存储
+            const epub = new epubStorage();
+            await epub.storageData(arrayBuffer);
+            
+            ElMessage({
+                message: '模板文件导入成功',
+                type: 'success',
+            });
+            
+            // 重新加载书籍列表
+            await loadBooks();
+        } catch (error) {
+            console.error('模板文件导入失败:', error);
+            ElMessage.error('模板文件导入失败: ' + (error instanceof Error ? error.message : '未知错误'));
+        }
     };
 
     onMounted(async () => {
@@ -141,6 +170,27 @@
     .upload:hover{
         background-color: rgb(163, 204, 220);
     }
+    
+    /* 新增：模板按钮样式 */
+    .template {
+        width: 60px;
+        height: 17px;
+        position: absolute;
+        left: 150px; /* 在导入按钮右侧 */
+        top: 19.5px;
+        font-size: 11px;
+        font-weight: 700;
+        font-family: '黑体';
+        color: rgb(6, 86, 118);
+        border: none;
+        background-color: rgb(218, 235, 243);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .template:hover {
+        background-color: rgb(183, 214, 228);
+    }
+    
     .space {
         position: absolute;
         top: 40px;
