@@ -5,6 +5,9 @@
     <div class="frame" v-show="part === 'chatHis'">
         <chatHis />
     </div>
+    <div class="frame" v-show="part === 'readerSet'">
+        <readerSet />
+    </div>
 </template>
 
 <script lang="ts">
@@ -17,6 +20,7 @@
     import { ref , watch} from 'vue';
     import BookFrame from './collapse/bookCatalog.vue';
     import chatHis from './collapse/chatHis.vue';
+    import readerSet from './collapse/readerSet.vue';
     
     import {collapsePart} from '@/stores/collapsePart'
     const clp = collapsePart()

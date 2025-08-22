@@ -36,13 +36,11 @@
 
     .queryFrame::-webkit-scrollbar-track {
         background: rgb(239, 239, 239);
-        border-radius: 2px;
         margin: 4px 0; /* 添加上下边距 */
     }
 
     .queryFrame::-webkit-scrollbar-thumb {
         background: rgb(157, 220, 227);
-        border-radius: 3px;
     }
 
     .queryFrame::-webkit-scrollbar-thumb:hover {
@@ -50,9 +48,7 @@
     }
     /* 标题区块 - 现代卡片样式 */
     .nr-box {
-        margin-bottom: 20px;
         border: 1px solid #e8e8e8;
-        border-radius: 12px;
         overflow: hidden;
         background: #fff;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -80,7 +76,6 @@
     .z_zb {
         font-size: 11px;
         padding: 2px 6px;
-        border-radius: 4px;
         color: #fff;
         font-weight: 600;
         letter-spacing: 0.3px;
@@ -135,10 +130,10 @@
         width: 24px;
         height: 24px;
         background: #f1f5f9;
-        border-radius: 50%;
         margin-left: 8px;
         cursor: pointer;
         transition: all 0.2s;
+        display: none;
     }
 
     .audio_play_button:hover {
@@ -199,7 +194,7 @@
         padding: 12px 16px;
         margin: 14px 0;
         font-size: 13px;
-        border-radius: 0 6px 6px 0;
+        display: none;
     }
 
     /* 翻译标题 */
@@ -208,6 +203,7 @@
         color: #1e293b;
         display: inline-block;
         min-width: 40px;
+        display: none;
     }
 
     /* 翻译内容 */
@@ -261,6 +257,7 @@
         line-height: 1.5;
         margin-top: 4px;
         display: block;
+        display: none;
     }
 
     /* 补充说明 (浅色) */
@@ -351,4 +348,144 @@
     .nr-box {
         animation: fadeIn 0.3s ease-out forwards;
     }
+    /* ========== 全局容器 ========== */
+
+/* WebKit 滚动条样式 */
+.queryFrame::-webkit-scrollbar {
+    width: 6px;
+}
+
+.queryFrame::-webkit-scrollbar-track {
+    background: rgb(239, 239, 239);
+    border-radius: 2px;
+    margin: 4px 0;
+}
+
+.queryFrame::-webkit-scrollbar-thumb {
+    background: rgb(157, 220, 227);
+    border-radius: 3px;
+}
+
+.queryFrame::-webkit-scrollbar-thumb:hover {
+    background: rgb(13, 151, 205);
+}
+
+/* ========== 主词条容器 .jnr ========== */
+.queryFrame .jnr {
+    max-width: 768px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.queryFrame .jnr:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ========== 词头：汉字 + 拼音 ========== */
+.queryFrame .jnr > p:first-of-type {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 14px;
+}
+
+.queryFrame .jnr strong {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-right: 8px;
+}
+
+.queryFrame .jnr .dicpy {
+    font-size: 15px;
+    color: #2563eb;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* ========== 释义条目 ========== */
+.queryFrame .jnr p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.queryFrame .jnr p span.cino {
+    display: inline-block;
+    min-width: 20px;
+    font-weight: 600;
+    color: #dc2626;
+    margin-right: 6px;
+}
+
+/* ========== 例句区块 ========== */
+.queryFrame .jnr p.diczx1,
+.queryFrame .jnr p .diczx1 {
+    margin: 14px 0 6px 8px;
+    padding-left: 12px;
+    border-left: 2px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.queryFrame .jnr .diczx2 {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.queryFrame .jnr .smcs {
+    color: #64748b;
+    font-size: 13px;
+    font-style: italic;
+    margin-top: 4px;
+    display: block;
+}
+
+/* ========== 动画 ========== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.queryFrame .jnr {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+    .queryFrame .jnr {
+        padding: 16px;
+        border-radius: 10px;
+        margin: 0 16px;
+    }
+
+    .queryFrame .jnr > p:first-of-type {
+        font-size: 16px;
+        flex-wrap: wrap;
+    }
+
+    .queryFrame .jnr strong {
+        font-size: 20px;
+    }
+
+    .queryFrame .jnr .dicpy {
+        font-size: 14px;
+    }
+
+    .queryFrame .jnr p {
+        font-size: 13px;
+    }
+
+    .queryFrame .jnr p.diczx1,
+    .queryFrame .jnr .smcs {
+        font-size: 12px;
+    }
+}
 </style>

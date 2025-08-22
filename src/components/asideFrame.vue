@@ -67,9 +67,9 @@
             <template #title>对话记录</template>
         </el-menu-item>
 
-        <el-menu-item index="3" disabled>
-            <el-icon><Document class="custom-icon" /></el-icon>
-            <template #title>Navigator Three</template>
+        <el-menu-item index="3" @click="read('readerSet')">
+            <el-icon><Operation class="custom-icon" /></el-icon>
+            <template #title>阅读器参数</template>
         </el-menu-item>
 
         <el-menu-item index="4">
@@ -96,6 +96,7 @@
         Search,
         Setting,
         ChatLineSquare,
+        Operation
     } from '@element-plus/icons-vue'
 
     const isCollapse = ref(true);
