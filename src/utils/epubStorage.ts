@@ -240,4 +240,27 @@ export default class epubStorage {
         const db = new MyDatabase();
         return await db.books.toArray();
     }
+
+
+    /**
+     * 根据书籍ID删除书籍
+     * @param bookid 要删除的书籍ID
+     * @returns Promise<void>
+     */
+    static async deleteBook(bookid: string): Promise<void> {
+        class MyDatabase extends Dexie {
+            books!: Dexie.Table<{ bookid: string }, string>;
+            
+            constructor() {
+                super('EpubLibrary');
+                this.version(1).stores({
+                    books: 'bookid, fileName, added'
+                });
+            }
+        }
+
+        const db = new MyDatabase();
+        await db.books.delete(bookid);
+    }
+
 }

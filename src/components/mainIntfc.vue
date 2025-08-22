@@ -19,6 +19,7 @@
                 :key="book.bookid" 
                 :bookid="book.bookid"
                 @click="handleBookClick(book.bookid)"
+                @delete="removeBook"
             />
         </el-space>
     </div>
@@ -130,6 +131,9 @@
         } catch (error) {
             ElMessage.error('处理 EPUB 失败：' + error)
         }
+    };
+    const removeBook = (bookid: string) => {
+        booksList.value = booksList.value.filter(book => book.bookid !== bookid);
     };
 </script>
 
