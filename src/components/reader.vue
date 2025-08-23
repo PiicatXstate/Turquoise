@@ -1,50 +1,34 @@
 <template>
     <div id="readerFrame">
-
         <div id="informt">
                 <p id="chapter">{{ currentChapter }}&nbsp;&nbsp;&nbsp;{{ currentPage }} / {{ totalPages }}</p>
                 <p id="href">{{ currentHref }}</p>
-
                 <el-icon id="pages" @click="closeReader">
                     <Close style="stroke-width: 10; width: 1.5em; height: 1.5em;" />
                 </el-icon>
         </div>
-
         <div id="viewer" ref="viewer">
-
         </div>
-
         <div class="select" v-show="selectShowJudge" ref="select">
-
             <CopyOutlined id="copyDoc" @click="copyDoc"/>
             <p id="copyDocText">复制</p>
-
             <HighlightOutlined id="highLight" @click="highLightDoc"/>
             <p id="HighLightText">高亮</p>
-
             <BoldOutlined id="bold" @click="boldDoc"/>
             <p id="boldText">加粗</p>
-
             <ItalicOutlined id="italic" @click="italicDoc"/>
             <p id="italicText">斜体</p>
-
             <UnderlineOutlined id="underline" @click="underlineDoc"/> 
             <p id="underlineText">划线</p>
-
             <EditOutlined id="edit" @click="addNote"/> 
             <p id="editText">注释</p>
-
             <ProjectOutlined id="project" @click="queryWords"/> 
             <p id="projectText">查词</p>
-
-            <OneToOneOutlined id="onetoone"/> 
+            <OneToOneOutlined id="onetoone" @click="aiTranslate"/> 
             <p id="onetooneText">AI答</p>
-
             <TagOutlined id="tag" @click="favoriteDoc"/> 
             <p id="tagText">收藏</p>
-
         </div>
-
         <div id="launch" v-show="launchShowJudge" ref="launch">
             <div id="color">
                 <button 
@@ -57,7 +41,6 @@
             </button>
             </div>
         </div>
-
         <div id="trans" ref="trans" v-show="transShowJudge && selectShowJudge">
             <p class="word">{{ word }}</p>
             <div class="zhanwei"></div>
@@ -70,7 +53,6 @@
                 </ul>
             </div>
         </div>
-
         <!-- 交互式注释模态框 -->
         <div v-if="noteModalVisible" class="note-modal">
             <div class="note-modal-content">
@@ -92,7 +74,6 @@
                 </div>
             </div>
         </div>
-
         <!-- 释义弹窗 -->
         <div 
             v-if="definitionPopupVisible" 
@@ -132,9 +113,9 @@
         EditOutlined,
         ProjectOutlined,
         OneToOneOutlined,
-        TagOutlined
+        TagOutlined,
+        FacebookFilled
     } from '@ant-design/icons-vue';
-
     // 导入注释工具
     import {
     // @ts-ignore
@@ -151,12 +132,10 @@
       getAnnotationsForChapter,
       cleanupStaleAnnotations
     } from '@/utils/annotationUtils';
-
     // 扩展Annotation接口，添加definition字段
     interface ExtendedAnnotation extends Annotation {
         definition?: string;
     }
-
     // 组件样式 来自Flow
     const defaultStyle = {
         html: {
@@ -173,7 +152,6 @@
             'background-color': 'rgba(3, 102, 214, 0.2)',
         },
     }
-
     let color = ref('red')
     let colors = ref([
         '#FFFF00',
@@ -189,33 +167,116 @@
     const select = ref<HTMLElement | null>(null);
     const launch = ref<HTMLElement | null>(null);
     const trans = ref<HTMLElement | null>(null)
-
     // 初始化章节、页数和HTML文件路径
     const currentChapter = ref('加载中...');
     const currentPage = ref(0);
     const totalPages = ref(0);
     const currentHref = ref('');
-
     // 注释相关
     const currentSelection = ref<{ range: Range, text: string } | null>(null);
     const noteModalVisible = ref(false);
     const noteContent = ref('');
     const selectedText = ref(''); // 用于显示在模态框中的选中文本
-    
     let selectShowJudge = ref(false);
     let transShowJudge = ref(false);
     let launchShowJudge = ref(false);
     let canNavigate = ref(true);    // 控制是否允许翻页的标志
     let word = ref('')
     let transData = ref({})
-
+    // 触摸事件相关变量
+    let touchStartX = ref(0);
+    let touchStartY = ref(0);
+    let touchMoveX = ref(0);
+    let touchMoveY = ref(0);
+    let isTouching = ref(false);
+    const MIN_SWIPE_DISTANCE = 50; // 最小滑动距离，用于判断是否为有效滑动
+    const MAX_VERTICAL_MOVE = 100; // 最大允许的垂直移动，超过则忽略翻页
+    let touchCleanupFunctions = ref<(() => void)[]>([]); // 用于存储清理函数
     // 释义弹窗相关
     const definitionPopupVisible = ref(false);
     const popupWord = ref('');
     const popupDefinition = ref('');
     const popupPosition = ref({ top: 0, left: 0 });
     const readerSettings = readerSet();
-
+    
+    // 清理所有触摸事件监听器
+    const cleanupTouchListeners = () => {
+        touchCleanupFunctions.value.forEach(cleanup => cleanup());
+        touchCleanupFunctions.value = [];
+    };
+    
+    // 移动端触摸开始事件处理
+    const handleTouchStart = (e: TouchEvent) => {
+        // 如果当前正在显示选择框，不处理翻页
+        if (selectShowJudge.value) {
+            return;
+        }
+        
+        isTouching.value = true;
+        touchStartX.value = e.touches[0].clientX;
+        touchStartY.value = e.touches[0].clientY;
+        touchMoveX.value = 0;
+        touchMoveY.value = 0;
+    };
+    
+    // 移动端触摸移动事件处理
+    const handleTouchMove = (e: TouchEvent) => {
+        if (!isTouching.value) return;
+        
+        touchMoveX.value = e.touches[0].clientX;
+        touchMoveY.value = e.touches[0].clientY;
+    };
+    
+    // 移动端触摸结束事件处理
+    const handleTouchEnd = () => {
+        if (!isTouching.value) return;
+        isTouching.value = false;
+        
+        // 计算滑动距离
+        const diffX = touchMoveX.value - touchStartX.value;
+        const diffY = touchMoveY.value - touchStartY.value;
+        
+        // 判断是否为水平滑动（排除垂直滚动）
+        if (Math.abs(diffY) > Math.abs(diffX) * 1.5) {
+            return; // 垂直滑动为主，不处理
+        }
+        
+        // 检查是否达到最小滑动距离
+        if (Math.abs(diffX) < MIN_SWIPE_DISTANCE) {
+            return; // 滑动距离不够，不翻页
+        }
+        
+        // 检查垂直移动是否过大
+        if (Math.abs(diffY) > MAX_VERTICAL_MOVE) {
+            return; // 垂直移动过大，不翻页
+        }
+        
+        // 根据滑动方向翻页
+        if (diffX > 0) {
+            // 向右滑动，上一页
+            prevPage();
+        } else {
+            // 向左滑动，下一页
+            nextPage();
+        }
+    };
+    
+    // 上一页
+    const prevPage = () => {
+        if (canNavigate.value && rendition.value) {
+            canNavigate.value = false;
+            rendition.value.prev();
+        }
+    };
+    
+    // 下一页
+    const nextPage = () => {
+        if (canNavigate.value && rendition.value) {
+            canNavigate.value = false;
+            rendition.value.next();
+        }
+    };
+    
     // 转数字为数字序号
     function toOrdinalNumber(num:number) {
         const ordinalChars = [
@@ -229,7 +290,7 @@
             return `⑴${num}`;
         }
     }
-
+    
     // 请求API
     async function queryWord(word:string) {
         try {
@@ -243,7 +304,7 @@
             console.error('查询出错:', error);
         }
     }
-
+    
     // 处理窗口大小变化
     const handleResize = () => {
         if (rendition.value) {
@@ -251,9 +312,11 @@
                 viewer.value?.clientWidth + 'px',
                 viewer.value?.clientHeight + 'px'
             );
+            selectShowJudge.value = false;
+            transShowJudge.value = false;
         }
     };
-
+    
     // 设置ResizeObserver
     const setupResizeObserver = () => {
         if (viewer.value && rendition.value) {
@@ -261,7 +324,7 @@
             resizeObserver.value.observe(viewer.value);
         }
     };
-
+    
     // 应用样式到Range，同时保持原有DOM结构
     function applyStyleToRange(
         range: Range,
@@ -313,7 +376,6 @@
                 wrapper.dataset.definition = annotation.definition || '';
                 wrapper.dataset.text = annotation.text;
                 wrapper.style.cursor = 'pointer';
-                
                 // 添加事件监听
                 wrapper.addEventListener('mouseenter', () => {
                     wrapper.style.color = '#0066CC';
@@ -372,7 +434,7 @@
         range.setStart(savedRange.startContainer, savedRange.startOffset);
         range.setEnd(savedRange.endContainer, savedRange.endOffset);
     }
-
+    
     // 清理空节点，但保留文档结构
     function cleanupEmptyNodes(node: Node | null) {
         if (!node) return;
@@ -400,7 +462,7 @@
             }
         }
     }
-
+    
     // 获取样式配置
     function getStyleForType(type: string, color?: string) {
         return (element: HTMLElement) => {
@@ -432,8 +494,7 @@
             element.style.lineHeight = 'inherit';
         };
     }
-
-
+    
     // 渲染交互式注释
     function renderInteractiveAnnotations(rootNode: Node, annotations: ExtendedAnnotation[]) {
         console.log('Rendering interactive annotations on node:', rootNode);
@@ -491,7 +552,7 @@
             });
         });
     }
-
+    
     // 显示释义弹窗
     function showDefinitionPopup(word: string, definition: string, event: MouseEvent) {
         popupWord.value = word;
@@ -517,12 +578,12 @@
         popupPosition.value = { top, left };
         definitionPopupVisible.value = true;
     }
-
+    
     // 关闭释义弹窗
     function closeDefinitionPopup() {
         definitionPopupVisible.value = false;
     }
-
+    
     // 清除已有注释（防止重复渲染）
     function removeExistingAnnotations(rootNode: Node) {
         // @ts-ignore
@@ -536,7 +597,7 @@
             span.remove();
         });
     }
-
+    
     // 恢复章节注释
     function restoreAnnotationsForChapter(chapterHref: string) {
         if (!rendition.value) return;
@@ -586,7 +647,7 @@
             renderInteractiveAnnotations(iframeDoc.body, interactiveAnnotations);
         });
     }
-
+    
     // 保存当前选择为注释
     function saveCurrentSelection(type: string, color?: string, definition?: string) {
         const iframe = rendition.value?.manager.container.querySelector('iframe');
@@ -645,7 +706,7 @@
             type: 'success',
         });
     }
-
+    
     // 收藏文档
     function favoriteDoc() {
         saveCurrentSelection('highlight', '#FF0000');
@@ -654,7 +715,7 @@
             type: 'success',
         });
     }
-
+    
     // 十六进制转RGBA
     function hexToRgba(hex: string, alpha: number): string {
         hex = hex.replace('#', '');
@@ -672,7 +733,7 @@
         }
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
-
+    
     // 添加注释
     function addNote() {
         const iframe = rendition.value?.manager.container.querySelector('iframe');
@@ -692,7 +753,7 @@
         noteModalVisible.value = true;
         selectShowJudge.value = false;
     }
-
+    
     // 保存注释
     function saveNote() {
         if (!currentSelection.value) {
@@ -712,13 +773,13 @@
         noteModalVisible.value = false;
         currentSelection.value = null;
     }
-
+    
     // 取消注释
     function cancelNote() {
         noteModalVisible.value = false;
         currentSelection.value = null;
     }
-
+    
     // 初始化epub阅读器
     onMounted(async () => {
         const arrayBuffer: ArrayBuffer = await epubStorage.loadBook(props.bookid) as ArrayBuffer;
@@ -736,7 +797,6 @@
         rendition.value.themes.default(defaultStyle)
         rendition.value.themes.font(readerSettings.font);
         rendition.value.themes.fontSize(readerSettings.fontSize + 'px');
-        
         rendition.value.display().then(() => {
             setupResizeObserver();
         });
@@ -768,6 +828,34 @@
                     restoreAnnotationsForChapter(spineItem.href);
                 }, 100);
             }
+            
+            // 添加触摸事件监听器到iframe内部文档
+            const addTouchListenersToIframe = () => {
+                // 清理之前的触摸事件监听器
+                cleanupTouchListeners();
+                
+                // 添加触摸事件监听器到iframe内部的文档
+                const touchStartListener = (e: TouchEvent) => handleTouchStart(e);
+                const touchMoveListener = (e: TouchEvent) => handleTouchMove(e);
+                const touchEndListener = () => handleTouchEnd();
+                
+                iframeDoc.addEventListener('touchstart', touchStartListener, { passive: true });
+                iframeDoc.addEventListener('touchmove', touchMoveListener, { passive: true });
+                iframeDoc.addEventListener('touchend', touchEndListener);
+                
+                // 存储清理函数
+                touchCleanupFunctions.value.push(() => {
+                    iframeDoc.removeEventListener('touchstart', touchStartListener);
+                    iframeDoc.removeEventListener('touchmove', touchMoveListener);
+                    iframeDoc.removeEventListener('touchend', touchEndListener);
+                });
+                
+                console.log('触摸事件监听器已添加到iframe内部文档');
+            };
+            
+            // 立即尝试添加触摸事件监听器
+            addTouchListenersToIframe();
+            
             // 触发编辑
             iframeDoc.addEventListener('contextmenu', async function(event: MouseEvent) {
                 const selection = iframeDoc.getSelection();
@@ -862,6 +950,7 @@
                 }
             });
         });
+        
         // 监听键盘事件
         book.value.ready.then(() => {
             const keyListener = (e: KeyboardEvent) => {
@@ -880,6 +969,7 @@
             rendition.value?.on("keyup", keyListener);
             document.addEventListener("keyup", keyListener, false);
         });
+        
         // 传出书籍对象
         book.value.loaded.navigation.then(() => {
             const user = bookOBJ();
@@ -889,6 +979,8 @@
         watch(() => user.changeMenu, (Book) => {
             if (Book && rendition.value) {
                 rendition.value.display(Book);
+                selectShowJudge.value = false;
+                transShowJudge.value = false;
             }
         });
         watch(() => readerSettings.font, (newFont) => {
@@ -901,9 +993,13 @@
                 rendition.value.themes.fontSize(newSize + 'px');
             }
         });
-
-
     });
+    
+    // 组件卸载时清理所有事件监听器
+    onUnmounted(() => {
+        cleanupTouchListeners();
+    });
+    
     // 关闭阅读器
     function closeReader() {
         // 可以在这里添加清理逻辑
@@ -912,6 +1008,7 @@
         bookUser.book = undefined;
         bookUser.changeMenu = undefined;
     }
+    
     // 复制
     function copyDoc() {
         const iframe = rendition.value.manager.container.querySelector('iframe');
@@ -935,31 +1032,38 @@
             });
         }
     }
+    
     // 高亮
     function highLightDoc() {
         launchShowJudge.value = !launchShowJudge.value;
     }
+    
     // 高亮颜色选择
     function highLightColor(color: string): void {
         saveCurrentSelection('highlight', color);
     }
+    
     // 下划线
     function underlineDoc(): void {
         saveCurrentSelection('underline');
     }
+    
     // 加粗
     function boldDoc(): void {
         saveCurrentSelection('bold');
     }
+    
     // 斜体
     function italicDoc(): void {
         saveCurrentSelection('italic');
     }
+    
     // 弹出查词
     function queryWords(): void{
         const user = queryContents()
         user.show = true
     }
+    
     // 数据查找
     const updateLocationInfo = (location: any) => {
         if (!location) return;
@@ -991,6 +1095,7 @@
         totalPages.value = location.start.displayed.total;
         currentHref.value = book.value.spine.get(location.start.index)?.href || '';
     };
+    
     const findTocItemByHref = (href: string) => {
         if (!book.value || !book.value.navigation.toc) return null;
         const findInItems = (items: any[]): any => {
@@ -1005,21 +1110,70 @@
         };
         return findInItems(book.value.navigation.toc);
     };
+    
+    // 更新书本数据
+    function updateBookData() {
+        const user = bookOBJ();
+        // 1. 获取书本名称
+        const bookName = book.value.packaging.metadata.title || '未知书名';
+        // 2. 获取书本简介
+        const bookDescription = book.value.packaging.metadata.description || '无简介';
+        // 3. 获取当前iframe文档
+        const iframe = rendition.value?.manager.container.querySelector('iframe');
+        if (!iframe) {
+            console.error('无法获取iframe');
+            return;
+        }
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) {
+            console.error('无法获取iframe文档');
+            return;
+        }
+        // 4. 获取当前章节文本（即当前页所在章节的全部文本）
+        const chapterText = getChapterText(iframeDoc.body);
+        // 5. 获取当前选择文本
+        const selection = iframeDoc.getSelection();
+        const selectedText = selection && !selection.isCollapsed ? selection.toString().trim() : '';
+        // 6. 获取当前选择文本上下文20字符
+        let contextBefore = '';
+        let contextAfter = '';
+        if (selectedText && chapterText) {
+            const selectionStart = chapterText.indexOf(selectedText);
+            if (selectionStart !== -1) {
+                const selectionEnd = selectionStart + selectedText.length;
+                contextBefore = chapterText.substring(Math.max(0, selectionStart - 20), selectionStart);
+                contextAfter = chapterText.substring(selectionEnd, selectionEnd + 20);
+            }
+        }
+        user.bookData = {
+            title: bookName,
+            description: bookDescription,
+            chapterText: chapterText,
+            selectedText: selectedText,
+            contextBefore : contextBefore,
+            contextAfter : contextAfter
+        }
+        return user.bookData
+    }
+    
+    // AI翻译功能
+    function aiTranslate() {
+        updateBookData()
+        const user = bookOBJ();
+        user.filled = true;
+    }
 </script>
-
 <script lang="ts">
     export default {
         name: 'reader'
     }
 </script>
-
 <style scoped>
     @import '../css/reader.css';
     /* 添加缺失的注释样式 */
     .annotation-note {
         border-bottom: 1px dashed #0066CC;
     }
-    
     /* 注释样式 */
     .annotation-highlight {
         background-color: rgba(255, 255, 0, 0.1) !important;

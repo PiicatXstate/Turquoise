@@ -35,14 +35,14 @@
                 </div>
             </el-splitter-panel>
 
-            <el-splitter-panel size="0">
+            <el-splitter-panel v-model:size="panelSize">
                 <el-splitter layout="vertical" style="overflow: hidden;">
-                    <el-splitter-panel size="0" v-if="queryshow">
+                    <el-splitter-panel v-if="true">
                         <div class="demo-panel">
                             <queryFrame/>
                         </div>
                     </el-splitter-panel>
-                    <el-splitter-panel>
+                    <el-splitter-panel v-model:size="size">
                         <div class="demo-panel">
                             <aitrans/>
                         </div>
@@ -59,15 +59,42 @@
 <script lang="ts" setup>
     import { collapsePart } from '@/stores/collapsePart'
     import { queryContents } from '@/stores/queryContents';
+    import { bookOBJ } from './stores/bookOBJ';
     import { ref , watch } from 'vue';
+
+    const size = ref(window.innerHeight)
+    const panelSize = ref(0)
+
+    const book = bookOBJ()
 
 
     let foldState = ref(true)
 
     const user = queryContents();
-    let queryshow = ref(user.show);
-    watch(() => user.show, (newContent) => {
-        queryshow.value = newContent
+    // watch(() => user.content, (newContent) => {
+    //     if(user.show == true){
+    //         size.value = 0
+    //     if(panelSize.value == 0){
+    //         panelSize.value = 350
+    //     }}
+    //     user.show = false
+    // });
+
+    watch(() => book.filled, () => {
+        if(book.filled == true){
+            size.value = window.innerHeight
+        }
+        if(panelSize.value == 0){
+            panelSize.value = 350
+        }
+    });
+    watch(() => user.show, (newShow) => {
+        if(newShow == true){
+            size.value = 0
+        if(panelSize.value == 0){
+            panelSize.value = 350
+        }}
+        user.show = false
     });
     
     // 显示Part逻辑

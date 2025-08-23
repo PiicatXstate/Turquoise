@@ -18,20 +18,20 @@ export interface Annotation {
  * 获取DOM中的所有文本节点
  */
 export function getTextNodes(node: Node): Text[] {
-    console.log(`getTextNodes: starting from node`, node);
+    // // console.log(`getTextNodes: starting from node`, node);
     const textNodes: Text[] = [];
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
 
     let currentNode;
     while ((currentNode = walker.nextNode())) {
-        console.log(
-            `getTextNodes: found text node with length ${currentNode.nodeValue?.length}`,
-            currentNode,
-        );
+        // // console.log(
+        //     `getTextNodes: found text node with length ${currentNode.nodeValue?.length}`,
+        //     currentNode,
+        // );
         textNodes.push(currentNode as Text);
     }
 
-    console.log(`getTextNodes: total nodes found: ${textNodes.length}`);
+    // // console.log(`getTextNodes: total nodes found: ${textNodes.length}`);
     return textNodes;
 }
 
@@ -39,10 +39,10 @@ export function getTextNodes(node: Node): Text[] {
  * 获取范围内的所有文本节点
  */
 export function getTextNodesInRange(range: Range): Text[] {
-    console.log(
-        `getTextNodesInRange: range from ${range.startOffset} to ${range.endOffset} in container`,
-        range.startContainer,
-    );
+    // // console.log(
+    //     `getTextNodesInRange: range from ${range.startOffset} to ${range.endOffset} in container`,
+    //     range.startContainer,
+    // );
     const textNodes: Text[] = [];
 
     // 如果范围在一个文本节点内，直接返回该节点
@@ -50,7 +50,7 @@ export function getTextNodesInRange(range: Range): Text[] {
         range.startContainer === range.endContainer &&
         range.startContainer.nodeType === Node.TEXT_NODE
     ) {
-        console.log(`getTextNodesInRange: range is within a single text node`);
+        // // console.log(`getTextNodesInRange: range is within a single text node`);
         textNodes.push(range.startContainer as Text);
         return textNodes;
     }
@@ -67,10 +67,10 @@ export function getTextNodesInRange(range: Range): Text[] {
                     node.nodeValue?.length || 0,
                 );
 
-                console.log(
-                    `getTextNodesInRange: node at position ${rangeStartCompare}, ${rangeEndCompare}`,
-                    node,
-                );
+                // console.log(
+                //     `getTextNodesInRange: node at position ${rangeStartCompare}, ${rangeEndCompare}`,
+                //     node,
+                // );
 
                 // 节点在范围内或部分在范围内
                 if (rangeStartCompare <= 0 && rangeEndCompare >= 0) {
@@ -83,18 +83,18 @@ export function getTextNodesInRange(range: Range): Text[] {
 
     let currentNode;
     while ((currentNode = treeWalker.nextNode())) {
-        console.log(
-            `getTextNodesInRange: accepted node with text "${currentNode.nodeValue?.substring(
-                0,
-                50,
-            )}..."`,
-        );
+        // console.log(
+        //     `getTextNodesInRange: accepted node with text "${currentNode.nodeValue?.substring(
+        //         0,
+        //         50,
+        //     )}..."`,
+        // );
         textNodes.push(currentNode as Text);
     }
 
-    console.log(
-        `getTextNodesInRange: found ${textNodes.length} nodes in range`,
-    );
+    // console.log(
+    //     `getTextNodesInRange: found ${textNodes.length} nodes in range`,
+    // );
     return textNodes;
 }
 
@@ -105,12 +105,12 @@ export function getTextOffsets(
     range: Range,
     rootNode: Node,
 ): { start: number; end: number } {
-    console.log(
-        `getTextOffsets: starting with range`,
-        range,
-        `and rootNode`,
-        rootNode,
-    );
+    // // console.log(
+    //     `getTextOffsets: starting with range`,
+    //     range,
+    //     `and rootNode`,
+    //     rootNode,
+    // );
 
     // 检查 Range 是否在 rootNode 内
     if (!rootNode.contains(range.commonAncestorContainer)) {
@@ -123,43 +123,43 @@ export function getTextOffsets(
     let startOffset = -1;
     let endOffset = -1;
 
-    console.log(`getTextOffsets: processing ${textNodes.length} text nodes`);
+    // console.log(`getTextOffsets: processing ${textNodes.length} text nodes`);
 
     for (let i = 0; i < textNodes.length; i++) {
         const node = textNodes[i];
         const nodeLength = node.nodeValue?.length || 0;
 
-        console.log(
-            `getTextOffsets: node ${i} has length ${nodeLength}, total so far: ${totalLength}`,
-        );
+        // console.log(
+        //     `getTextOffsets: node ${i} has length ${nodeLength}, total so far: ${totalLength}`,
+        // );
 
         // 处理 startContainer
         if (startOffset === -1 && node === range.startContainer) {
             startOffset = totalLength + range.startOffset;
-            console.log(`getTextOffsets: found start offset at ${startOffset}`);
+            // console.log(`getTextOffsets: found start offset at ${startOffset}`);
         } else if (startOffset === -1 && node.contains(range.startContainer)) {
             // 处理 startContainer 是当前文本节点的子节点的情况
             if (range.startContainer.nodeType === Node.TEXT_NODE) {
                 startOffset = totalLength;
-                console.log(
-                    `getTextOffsets: found start offset at ${startOffset} (nested text node)`,
-                );
+                // console.log(
+                //     `getTextOffsets: found start offset at ${startOffset} (nested text node)`,
+                // );
             }
         }
 
         // 处理 endContainer
         if (endOffset === -1 && node === range.endContainer) {
             endOffset = totalLength + range.endOffset;
-            console.log(`getTextOffsets: found end offset at ${endOffset}`);
+            // console.log(`getTextOffsets: found end offset at ${endOffset}`);
             break; // 找到 end 后无需继续
         } else if (endOffset === -1 && node.contains(range.endContainer)) {
             // 处理 endContainer 是当前文本节点的子节点的情况
             if (range.endContainer.nodeType === Node.TEXT_NODE) {
                 endOffset =
                     totalLength + (range.endContainer.nodeValue?.length || 0);
-                console.log(
-                    `getTextOffsets: found end offset at ${endOffset} (nested text node)`,
-                );
+                // console.log(
+                //     `getTextOffsets: found end offset at ${endOffset} (nested text node)`,
+                // );
                 break;
             }
         }
@@ -175,9 +175,9 @@ export function getTextOffsets(
 
             if (endOffset === -1 && node === range.endContainer) {
                 endOffset = totalLength + range.endOffset;
-                console.log(
-                    `getTextOffsets: found end offset at ${endOffset} (in second pass)`,
-                );
+                // console.log(
+                //     `getTextOffsets: found end offset at ${endOffset} (in second pass)`,
+                // );
                 break;
             }
             totalLength += nodeLength;
@@ -196,10 +196,10 @@ export function getTextOffsets(
         // 尝试使用备用方法计算偏移量
         const backupOffsets = getTextOffsetsBackup(range, rootNode);
         if (backupOffsets) {
-            console.log(
-                `getTextOffsets: using backup method results`,
-                backupOffsets,
-            );
+            // console.log(
+            //     `getTextOffsets: using backup method results`,
+            //     backupOffsets,
+            // );
             return backupOffsets;
         }
 
@@ -208,9 +208,9 @@ export function getTextOffsets(
         );
     }
 
-    console.log(
-        `getTextOffsets: returning start: ${startOffset}, end: ${endOffset}`,
-    );
+    // console.log(
+    //     `getTextOffsets: returning start: ${startOffset}, end: ${endOffset}`,
+    // );
     return { start: startOffset, end: endOffset };
 }
 
@@ -221,7 +221,7 @@ function getTextOffsetsBackup(
     range: Range,
     rootNode: Node,
 ): { start: number; end: number } | null {
-    console.log(`getTextOffsetsBackup: using backup method`);
+    // console.log(`getTextOffsetsBackup: using backup method`);
 
     try {
         // 克隆范围以免影响原始范围
@@ -241,9 +241,9 @@ function getTextOffsetsBackup(
         const startOffset = startRange.toString().length;
         const endOffset = endRange.toString().length;
 
-        console.log(
-            `getTextOffsetsBackup: backup offsets start: ${startOffset}, end: ${endOffset}`,
-        );
+        // console.log(
+        //     `getTextOffsetsBackup: backup offsets start: ${startOffset}, end: ${endOffset}`,
+        // );
 
         return { start: startOffset, end: endOffset };
     } catch (error) {
@@ -260,11 +260,11 @@ export function createRangeFromOffsets(
     startOffset: number,
     endOffset: number,
 ): Range | null {
-    console.log(
-        `createRangeFromOffsets: rootNode`,
-        rootNode,
-        `start: ${startOffset}, end: ${endOffset}`,
-    );
+    // console.log(
+    //     `createRangeFromOffsets: rootNode`,
+    //     rootNode,
+    //     `start: ${startOffset}, end: ${endOffset}`,
+    // );
 
     const textNodes = getTextNodes(rootNode);
     let currentOffset = 0;
@@ -274,16 +274,16 @@ export function createRangeFromOffsets(
     let endNode: Text | null = null;
     let endNodeOffset = 0;
 
-    console.log(`createRangeFromOffsets: found ${textNodes.length} text nodes`);
+    // console.log(`createRangeFromOffsets: found ${textNodes.length} text nodes`);
 
     // 查找起始节点和偏移量
     for (let i = 0; i < textNodes.length; i++) {
         const node = textNodes[i];
         const nodeLength = (node.nodeValue || "").length;
 
-        console.log(
-            `createRangeFromOffsets: node ${i} length ${nodeLength}, currentOffset: ${currentOffset}`,
-        );
+        // console.log(
+        //     `createRangeFromOffsets: node ${i} length ${nodeLength}, currentOffset: ${currentOffset}`,
+        // );
 
         if (
             startOffset >= currentOffset &&
@@ -291,9 +291,9 @@ export function createRangeFromOffsets(
         ) {
             startNode = node;
             startNodeOffset = startOffset - currentOffset;
-            console.log(
-                `createRangeFromOffsets: found start node at index ${i}, offset ${startNodeOffset}`,
-            );
+            // console.log(
+            //     `createRangeFromOffsets: found start node at index ${i}, offset ${startNodeOffset}`,
+            // );
             break;
         }
         currentOffset += nodeLength;
@@ -305,9 +305,9 @@ export function createRangeFromOffsets(
         const node = textNodes[i];
         const nodeLength = (node.nodeValue || "").length;
 
-        console.log(
-            `createRangeFromOffsets: node ${i} length ${nodeLength}, currentOffset: ${currentOffset}`,
-        );
+        // console.log(
+        //     `createRangeFromOffsets: node ${i} length ${nodeLength}, currentOffset: ${currentOffset}`,
+        // );
 
         if (
             endOffset >= currentOffset &&
@@ -315,9 +315,9 @@ export function createRangeFromOffsets(
         ) {
             endNode = node;
             endNodeOffset = endOffset - currentOffset;
-            console.log(
-                `createRangeFromOffsets: found end node at index ${i}, offset ${endNodeOffset}`,
-            );
+            // console.log(
+            //     `createRangeFromOffsets: found end node at index ${i}, offset ${endNodeOffset}`,
+            // );
             break;
         }
         currentOffset += nodeLength;
@@ -339,9 +339,9 @@ export function createRangeFromOffsets(
         range.setStart(startNode, startNodeOffset);
         range.setEnd(endNode, endNodeOffset);
 
-        console.log(
-            `createRangeFromOffsets: created range from ${range.startOffset} to ${range.endOffset}`,
-        );
+        // console.log(
+        //     `createRangeFromOffsets: created range from ${range.startOffset} to ${range.endOffset}`,
+        // );
         return range;
     } catch (error) {
         console.error("createRangeFromOffsets: error creating range", error);
@@ -357,7 +357,7 @@ function createRangeFromOffsetsBackup(
     startOffset: number,
     endOffset: number,
 ): Range | null {
-    console.log(`createRangeFromOffsetsBackup: using backup method`);
+    // console.log(`createRangeFromOffsetsBackup: using backup method`);
 
     try {
         // 创建一个临时范围来选择整个rootNode的内容
@@ -371,9 +371,9 @@ function createRangeFromOffsetsBackup(
         const adjustedStart = Math.min(startOffset, fullText.length);
         const adjustedEnd = Math.min(endOffset, fullText.length);
 
-        console.log(
-            `createRangeFromOffsetsBackup: adjusted offsets start: ${adjustedStart}, end: ${adjustedEnd}`,
-        );
+        // console.log(
+        //     `createRangeFromOffsetsBackup: adjusted offsets start: ${adjustedStart}, end: ${adjustedEnd}`,
+        // );
 
         // 使用字符位置方法来设置范围
         let charCount = 0;
@@ -414,9 +414,9 @@ function createRangeFromOffsetsBackup(
             range.setStart(startNode, startCharIndex);
             range.setEnd(endNode, endCharIndex);
 
-            console.log(
-                `createRangeFromOffsetsBackup: created range using backup method`,
-            );
+            // console.log(
+            //     `createRangeFromOffsetsBackup: created range using backup method`,
+            // );
             return range;
         }
     } catch (error) {
@@ -450,9 +450,9 @@ export function getContext(
     before: string;
     after: string;
 } {
-    console.log(
-        `getContext: position ${position}, length ${length}, contextLength ${contextLength}`,
-    );
+    // console.log(
+    //     `getContext: position ${position}, length ${length}, contextLength ${contextLength}`,
+    // );
     const startPosition = Math.max(0, position);
     const endPosition = Math.min(text.length, position + length);
 
@@ -464,9 +464,9 @@ export function getContext(
         after: text.substring(endPosition, end),
     };
 
-    console.log(
-        `getContext: before: "${result.before}", after: "${result.after}"`,
-    );
+    // console.log(
+    //     `getContext: before: "${result.before}", after: "${result.after}"`,
+    // );
     return result;
 }
 
@@ -479,12 +479,12 @@ export function findTextWithContext(
     contextBefore: string,
     contextAfter: string,
 ): number {
-    console.log(
-        `findTextWithContext: searching for "${searchText}" with context before: "${contextBefore}", after: "${contextAfter}"`,
-    );
+    // console.log(
+    //     `findTextWithContext: searching for "${searchText}" with context before: "${contextBefore}", after: "${contextAfter}"`,
+    // );
 
     if (!searchText) {
-        console.log(`findTextWithContext: searchText is empty, returning -1`);
+        // console.log(`findTextWithContext: searchText is empty, returning -1`);
         return -1;
     }
 
@@ -493,18 +493,18 @@ export function findTextWithContext(
     const cleanContextBefore = contextBefore.replace(/\s+/g, " ").trim();
     const cleanContextAfter = contextAfter.replace(/\s+/g, " ").trim();
 
-    console.log(`findTextWithContext: clean search: "${cleanSearchText}"`);
-    console.log(
-        `findTextWithContext: clean context before: "${cleanContextBefore}"`,
-    );
-    console.log(
-        `findTextWithContext: clean context after: "${cleanContextAfter}"`,
-    );
+    // console.log(`findTextWithContext: clean search: "${cleanSearchText}"`);
+    // console.log(
+    //     `findTextWithContext: clean context before: "${cleanContextBefore}"`,
+    // );
+    // // console.log(
+    //     `findTextWithContext: clean context after: "${cleanContextAfter}"`,
+    // );
 
     if (!cleanSearchText) {
-        console.log(
-            `findTextWithContext: clean search text is empty, returning -1`,
-        );
+        // console.log(
+        //     `findTextWithContext: clean search text is empty, returning -1`,
+        // );
         return -1;
     }
 
@@ -521,9 +521,9 @@ export function findTextWithContext(
         if (position === -1) break;
 
         matchCount++;
-        console.log(
-            `findTextWithContext: found match ${matchCount} at position ${position}`,
-        );
+        // console.log(
+        //     `findTextWithContext: found match ${matchCount} at position ${position}`,
+        // );
 
         // 获取实际上下文
         const beforeStart = Math.max(0, position - cleanContextBefore.length);
@@ -541,12 +541,12 @@ export function findTextWithContext(
         const cleanBefore = before.replace(/\s+/g, " ").trim();
         const cleanAfter = after.replace(/\s+/g, " ").trim();
 
-        console.log(
-            `findTextWithContext: actual context before: "${cleanBefore}"`,
-        );
-        console.log(
-            `findTextWithContext: actual context after: "${cleanAfter}"`,
-        );
+        // console.log(
+        //     `findTextWithContext: actual context before: "${cleanBefore}"`,
+        // );
+        // console.log(
+        //     `findTextWithContext: actual context after: "${cleanAfter}"`,
+        // );
 
         // 计算上下文匹配度
         const beforeMatchScore = calculateMatchScore(
@@ -558,22 +558,22 @@ export function findTextWithContext(
             cleanContextAfter,
         );
 
-        console.log(
-            `findTextWithContext: before match score: ${beforeMatchScore}`,
-        );
-        console.log(
-            `findTextWithContext: after match score: ${afterMatchScore}`,
-        );
+        // console.log(
+        //     `findTextWithContext: before match score: ${beforeMatchScore}`,
+        // );
+        // // console.log(
+        //     `findTextWithContext: after match score: ${afterMatchScore}`,
+        // );
 
         // 综合评分
         const matchScore = (beforeMatchScore + afterMatchScore) / 2;
-        console.log(`findTextWithContext: overall match score: ${matchScore}`);
+        // console.log(`findTextWithContext: overall match score: ${matchScore}`);
 
         // 如果找到完美匹配，立即返回
         if (matchScore > 0.9) {
-            console.log(
-                `findTextWithContext: perfect match found at position ${position}`,
-            );
+            // console.log(
+            //     `findTextWithContext: perfect match found at position ${position}`,
+            // );
             return position;
         }
 
@@ -581,25 +581,25 @@ export function findTextWithContext(
         if (matchScore > bestMatchScore) {
             bestMatchScore = matchScore;
             bestMatchPosition = position;
-            console.log(
-                `findTextWithContext: new best match at position ${position} with score ${bestMatchScore}`,
-            );
+            // console.log(
+            //     `findTextWithContext: new best match at position ${position} with score ${bestMatchScore}`,
+            // );
         }
 
         position++;
     }
 
-    console.log(`findTextWithContext: found ${matchCount} total matches`);
+    // console.log(`findTextWithContext: found ${matchCount} total matches`);
 
     // 如果最佳匹配的评分足够高，返回它
     if (bestMatchScore > 0.7) {
-        console.log(
-            `findTextWithContext: returning best match at position ${bestMatchPosition} with score ${bestMatchScore}`,
-        );
+        // console.log(
+        //     `findTextWithContext: returning best match at position ${bestMatchPosition} with score ${bestMatchScore}`,
+        // );
         return bestMatchPosition;
     }
 
-    console.log(`findTextWithContext: no suitable match found, returning -1`);
+    // console.log(`findTextWithContext: no suitable match found, returning -1`);
     return -1;
 }
 
@@ -608,17 +608,17 @@ export function findTextWithContext(
  */
 function calculateMatchScore(str1: string, str2: string): number {
     if (!str1 || !str2) {
-        console.log(
-            `calculateMatchScore: one or both strings are empty, returning 0`,
-        );
+        // console.log(
+        //     `calculateMatchScore: one or both strings are empty, returning 0`,
+        // );
         return 0;
     }
 
     // 如果其中一个字符串是空的，匹配度为0
     if (str1.length === 0 || str2.length === 0) {
-        console.log(
-            `calculateMatchScore: one or both strings have zero length, returning 0`,
-        );
+        // console.log(
+        //     `calculateMatchScore: one or both strings have zero length, returning 0`,
+        // );
         return 0;
     }
 
@@ -634,9 +634,9 @@ function calculateMatchScore(str1: string, str2: string): number {
     // 匹配度 = 1 - (编辑距离/最大长度)
     const score = 1 - editDistance / maxLength;
 
-    console.log(
-        `calculateMatchScore: "${str1}" vs "${str2}" -> editDistance: ${editDistance}, maxLength: ${maxLength}, score: ${score}`,
-    );
+    // console.log(
+    //     `calculateMatchScore: "${str1}" vs "${str2}" -> editDistance: ${editDistance}, maxLength: ${maxLength}, score: ${score}`,
+    // );
 
     return Math.max(0, Math.min(1, score));
 }
@@ -645,9 +645,9 @@ function calculateMatchScore(str1: string, str2: string): number {
  * 计算两个字符串的Levenshtein距离
  */
 function levenshteinDistance(a: string, b: string): number {
-    console.log(
-        `levenshteinDistance: calculating distance between "${a}" and "${b}"`,
-    );
+    // console.log(
+    //     `levenshteinDistance: calculating distance between "${a}" and "${b}"`,
+    // );
 
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
@@ -679,7 +679,7 @@ function levenshteinDistance(a: string, b: string): number {
     }
 
     const result = matrix[b.length][a.length];
-    console.log(`levenshteinDistance: result = ${result}`);
+    // console.log(`levenshteinDistance: result = ${result}`);
 
     return result;
 }
@@ -688,8 +688,9 @@ function levenshteinDistance(a: string, b: string): number {
  * 获取章节的纯文本内容
  */
 export function getChapterText(rootNode: Node): string {
+    
     const text = rootNode.textContent || "";
-    console.log(`getChapterText: extracted text with length ${text.length}`);
+    // console.log(`getChapterText: extracted text with length ${text.length}`);
     return text;
 }
 
@@ -697,7 +698,7 @@ export function getChapterText(rootNode: Node): string {
  * 保存注释到本地存储
  */
 export function saveAnnotation(annotation: Annotation): void {
-    console.log(`saveAnnotation: saving annotation`, annotation);
+    // console.log(`saveAnnotation: saving annotation`, annotation);
     const key = `epub-annotations-${annotation.bookId}`;
     let annotations = JSON.parse(localStorage.getItem(key) || "[]");
 
@@ -708,7 +709,7 @@ export function saveAnnotation(annotation: Annotation): void {
     if (existingIndex !== -1) {
         annotation.lastModified = new Date().toISOString();
         annotations[existingIndex] = annotation;
-        console.log(`saveAnnotation: updated existing annotation`);
+        // console.log(`saveAnnotation: updated existing annotation`);
     } else {
         // 确保新注释有唯一ID
         if (!annotation.id) {
@@ -718,24 +719,24 @@ export function saveAnnotation(annotation: Annotation): void {
         }
         annotation.createdAt = new Date().toISOString();
         annotations.push(annotation);
-        console.log(
-            `saveAnnotation: created new annotation with ID ${annotation.id}`,
-        );
+        // console.log(
+        //     `saveAnnotation: created new annotation with ID ${annotation.id}`,
+        // );
     }
 
     localStorage.setItem(key, JSON.stringify(annotations));
-    console.log(
-        `saveAnnotation: saved ${annotations.length} annotations total`,
-    );
+    // console.log(
+    //     `saveAnnotation: saved ${annotations.length} annotations total`,
+    // );
 }
 
 /**
  * 删除注释
  */
 export function deleteAnnotation(bookId: string, annotationId: string): void {
-    console.log(
-        `deleteAnnotation: bookId ${bookId}, annotationId ${annotationId}`,
-    );
+    // console.log(
+    //     `deleteAnnotation: bookId ${bookId}, annotationId ${annotationId}`,
+    // );
     const key = `epub-annotations-${bookId}`;
     let annotations = JSON.parse(localStorage.getItem(key) || "[]");
     const initialCount = annotations.length;
@@ -743,21 +744,21 @@ export function deleteAnnotation(bookId: string, annotationId: string): void {
         (ann: Annotation) => ann.id !== annotationId,
     );
     localStorage.setItem(key, JSON.stringify(annotations));
-    console.log(
-        `deleteAnnotation: removed ${
-            initialCount - annotations.length
-        } annotation(s)`,
-    );
+    // console.log(
+    //     `deleteAnnotation: removed ${
+    //         initialCount - annotations.length
+    //     } annotation(s)`,
+    // );
 }
 
 /**
  * 加载特定书籍的注释
  */
 export function loadAnnotations(bookId: string): Annotation[] {
-    console.log(`loadAnnotations: loading annotations for book ${bookId}`);
+    // console.log(`loadAnnotations: loading annotations for book ${bookId}`);
     const key = `epub-annotations-${bookId}`;
     const annotations = JSON.parse(localStorage.getItem(key) || "[]");
-    console.log(`loadAnnotations: found ${annotations.length} annotations`);
+    // console.log(`loadAnnotations: found ${annotations.length} annotations`);
     return annotations;
 }
 
@@ -768,16 +769,16 @@ export function getAnnotationsForChapter(
     bookId: string,
     chapterHref: string,
 ): Annotation[] {
-    console.log(
-        `getAnnotationsForChapter: book ${bookId}, chapter ${chapterHref}`,
-    );
+    // console.log(
+    //     `getAnnotationsForChapter: book ${bookId}, chapter ${chapterHref}`,
+    // );
     const annotations = loadAnnotations(bookId);
     const chapterAnnotations = annotations.filter(
         (ann) => ann.chapterHref === chapterHref,
     );
-    console.log(
-        `getAnnotationsForChapter: found ${chapterAnnotations.length} annotations for this chapter`,
-    );
+    // console.log(
+    //     `getAnnotationsForChapter: found ${chapterAnnotations.length} annotations for this chapter`,
+    // );
     return chapterAnnotations;
 }
 
@@ -789,18 +790,18 @@ export function cleanupStaleAnnotations(
     chapterHref: string,
     chapterText: string,
 ): void {
-    console.log(
-        `cleanupStaleAnnotations: checking for stale annotations in book ${bookId}, chapter ${chapterHref}`,
-    );
+    // console.log(
+    //     `cleanupStaleAnnotations: checking for stale annotations in book ${bookId}, chapter ${chapterHref}`,
+    // );
     const annotations = getAnnotationsForChapter(bookId, chapterHref);
     let removedCount = 0;
 
     annotations.forEach((annotation) => {
-        console.log(
-            `cleanupStaleAnnotations: checking annotation ${
-                annotation.id
-            } with text "${annotation.text.substring(0, 50)}..."`,
-        );
+        // console.log(
+        //     `cleanupStaleAnnotations: checking annotation ${
+        //         annotation.id
+        //     } with text "${annotation.text.substring(0, 50)}..."`,
+        // );
 
         const position = findTextWithContext(
             chapterText,
@@ -811,19 +812,19 @@ export function cleanupStaleAnnotations(
 
         // 如果匹配度太低，删除这个注释
         if (position === -1) {
-            console.log(
-                `cleanupStaleAnnotations: removing stale annotation ${annotation.id}`,
-            );
+            // console.log(
+            //     `cleanupStaleAnnotations: removing stale annotation ${annotation.id}`,
+            // );
             deleteAnnotation(bookId, annotation.id);
             removedCount++;
         } else {
-            console.log(
-                `cleanupStaleAnnotations: annotation ${annotation.id} is still valid at position ${position}`,
-            );
+            // console.log(
+            //     `cleanupStaleAnnotations: annotation ${annotation.id} is still valid at position ${position}`,
+            // );
         }
     });
 
-    console.log(
-        `cleanupStaleAnnotations: removed ${removedCount} stale annotations`,
-    );
+    // console.log(
+    //     `cleanupStaleAnnotations: removed ${removedCount} stale annotations`,
+    // );
 }

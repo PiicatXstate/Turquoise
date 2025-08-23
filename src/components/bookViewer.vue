@@ -27,7 +27,7 @@ export default {
 </script>
 
 <script lang="ts" setup>
-import { defineProps, computed, ref, defineEmits } from 'vue';
+import { ref, onMounted, computed, defineProps, defineEmits } from 'vue';
 import type { CSSProperties } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import epubStorage from '../utils/epubStorage.ts';
@@ -47,23 +47,15 @@ interface BookInfo {
     [key: string]: any; // 其他可选字段
 }
 
-// 默认 bookid 仅用于调试
-const bookInfo = ref<BookInfo>(
-    await epubStorage.getBookInfo(props.bookid || 'mdgxkpvxr9a850k1vsd')
-);
-
-const title = bookInfo.value.title;
+// 👇 响应式数据
+const bookInfo = ref<BookInfo | null>(null);
+const title = ref<string>('');
 const coverUrl = ref<string>('');
 const isHovered = ref(false);
 const scale = ref(0.9);
 const showDeleteBtn = ref(false);
 
-// 生成封面 URL
-if (bookInfo.value.cover) {
-    coverUrl.value = URL.createObjectURL(bookInfo.value.cover);
-}
-
-// 封面样式：支持背景图
+// 封面样式
 const coverStyle = computed<CSSProperties>(() => {
     return coverUrl.value
         ? {
@@ -75,7 +67,7 @@ const coverStyle = computed<CSSProperties>(() => {
         : {};
 });
 
-// 书框样式：缩放 + 悬停效果
+// 书框样式
 const frameStyle = computed<CSSProperties>(() => ({
     transform: `scale(${scale.value})`,
     backgroundColor: isHovered.value ? '#f0f0f0' : 'transparent',
@@ -97,18 +89,20 @@ const handleMouseLeave = () => {
     showDeleteBtn.value = false;
 };
 
-// 点击书本（打开阅读器）
+// 点击书本
 const handleClick = () => {
-    // 由父组件处理点击逻辑
+    // 由父组件处理
 };
 
 // 删除书籍
 const handleDelete = async (e: MouseEvent) => {
-    e.stopPropagation(); // 阻止冒泡到父级 click
+    e.stopPropagation();
+
+    if (!bookInfo.value) return;
 
     try {
         await ElMessageBox.confirm(
-            `确定要删除《${title}》吗？`,
+            `确定要删除《${bookInfo.value.title}》吗？`,
             '提示',
             {
                 confirmButtonText: '删除',
@@ -119,15 +113,28 @@ const handleDelete = async (e: MouseEvent) => {
 
         await epubStorage.deleteBook(props.bookid);
         emit('delete', props.bookid);
-        ElMessage({
-            type: 'success',
-            message: `《${title}》已被删除。`,
-        });
+        ElMessage.success(`《${bookInfo.value.title}》已被删除。`);
     } catch (error) {
-        // 用户取消或删除失败
-        // 不需要提示取消操作
+        // 用户取消或出错，静默处理
     }
 };
+
+// ✅ 在 onMounted 中加载数据
+onMounted(async () => {
+    try {
+        const info = await epubStorage.getBookInfo(props.bookid || 'mdgxkpvxr9a850k1vsd');
+        if (!info) return;
+
+        bookInfo.value = info;
+        title.value = info.title;
+
+        if (info.cover) {
+            coverUrl.value = URL.createObjectURL(info.cover);
+        }
+    } catch (error) {
+        console.error('加载书籍信息失败:', error);
+    }
+});
 </script>
 
 <style scoped>

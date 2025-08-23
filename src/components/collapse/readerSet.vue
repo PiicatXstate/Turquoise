@@ -218,7 +218,7 @@ export default {
 .setting-label {
   font-size: 0.875rem;
   color: #334155;
-  width: 6.25rem;
+  width: 4.25rem;
   flex-shrink: 0;
   text-align: left;
 }
@@ -226,15 +226,12 @@ export default {
 .setting-control {
   flex: 1;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   gap: 0.5rem;
 }
 
 .font-select {
   width: 100%;
-  max-width: 15rem;
-  min-width: 10rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
@@ -297,7 +294,6 @@ export default {
 }
 
 .font-size-slider {
-  -webkit-appearance: none;
   width: 100%;
   max-width: 12rem;
   height: 0.25rem;
