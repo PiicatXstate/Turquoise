@@ -78,7 +78,7 @@
     const loadTemplateFile = async () => {
         try {
             // 从public目录获取模板文件
-            const response = await fetch('/古文观止.epub');
+            const response = await fetch('https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1755955777428_qdqqd_bgrccd.epub');
             if (!response.ok) {
                 throw new Error('模板文件加载失败');
             }
