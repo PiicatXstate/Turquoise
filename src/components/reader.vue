@@ -172,8 +172,16 @@
     const currentPage = ref(0);
     const totalPages = ref(0);
     const currentHref = ref('');
-    // 注释相关
-    const currentSelection = ref<{ range: Range, text: string } | null>(null);
+    // 注释相关 - 修复：提前保存选中文本信息
+    const selectedTextInfo = ref<{
+        text: string;
+        startOffset: number;
+        endOffset: number;
+        contextBefore: string;
+        contextAfter: string;
+        chapterHref: string;
+        chapterText: string;
+    } | null>(null);
     const noteModalVisible = ref(false);
     const noteContent = ref('');
     const selectedText = ref(''); // 用于显示在模态框中的选中文本
@@ -198,59 +206,48 @@
     const popupDefinition = ref('');
     const popupPosition = ref({ top: 0, left: 0 });
     const readerSettings = readerSet();
-    
     // 清理所有触摸事件监听器
     const cleanupTouchListeners = () => {
         touchCleanupFunctions.value.forEach(cleanup => cleanup());
         touchCleanupFunctions.value = [];
     };
-    
     // 移动端触摸开始事件处理
     const handleTouchStart = (e: TouchEvent) => {
         // 如果当前正在显示选择框，不处理翻页
-        if (selectShowJudge.value) {
+        if (selectShowJudge.value || window.getSelection()?.toString()) {
             return;
         }
-        
         isTouching.value = true;
         touchStartX.value = e.touches[0].clientX;
         touchStartY.value = e.touches[0].clientY;
         touchMoveX.value = 0;
         touchMoveY.value = 0;
     };
-    
     // 移动端触摸移动事件处理
     const handleTouchMove = (e: TouchEvent) => {
         if (!isTouching.value) return;
-        
         touchMoveX.value = e.touches[0].clientX;
         touchMoveY.value = e.touches[0].clientY;
     };
-    
     // 移动端触摸结束事件处理
     const handleTouchEnd = () => {
         if (!isTouching.value) return;
         isTouching.value = false;
-        
         // 计算滑动距离
         const diffX = touchMoveX.value - touchStartX.value;
         const diffY = touchMoveY.value - touchStartY.value;
-        
         // 判断是否为水平滑动（排除垂直滚动）
         if (Math.abs(diffY) > Math.abs(diffX) * 1.5) {
             return; // 垂直滑动为主，不处理
         }
-        
         // 检查是否达到最小滑动距离
         if (Math.abs(diffX) < MIN_SWIPE_DISTANCE) {
             return; // 滑动距离不够，不翻页
         }
-        
         // 检查垂直移动是否过大
         if (Math.abs(diffY) > MAX_VERTICAL_MOVE) {
             return; // 垂直移动过大，不翻页
         }
-        
         // 根据滑动方向翻页
         if (diffX > 0) {
             // 向右滑动，上一页
@@ -260,7 +257,6 @@
             nextPage();
         }
     };
-    
     // 上一页
     const prevPage = () => {
         if (canNavigate.value && rendition.value) {
@@ -268,7 +264,6 @@
             rendition.value.prev();
         }
     };
-    
     // 下一页
     const nextPage = () => {
         if (canNavigate.value && rendition.value) {
@@ -276,7 +271,6 @@
             rendition.value.next();
         }
     };
-    
     // 转数字为数字序号
     function toOrdinalNumber(num:number) {
         const ordinalChars = [
@@ -290,21 +284,19 @@
             return `⑴${num}`;
         }
     }
-    
     // 请求API
     async function queryWord(word:string) {
         try {
             const response = await fetch(`http://localhost:5000/query?word=${encodeURIComponent(word)}`);
             if (!response.ok) {
-                throw new Error(`请求失败: ${response.status}`);
+                console.log(`请求失败: ${response.status}`);
             }
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('查询出错:', error);
+            console.log('查询出错:', error);
         }
     }
-    
     // 处理窗口大小变化
     const handleResize = () => {
         if (rendition.value) {
@@ -316,7 +308,6 @@
             transShowJudge.value = false;
         }
     };
-    
     // 设置ResizeObserver
     const setupResizeObserver = () => {
         if (viewer.value && rendition.value) {
@@ -324,7 +315,6 @@
             resizeObserver.value.observe(viewer.value);
         }
     };
-    
     // 应用样式到Range，同时保持原有DOM结构
     function applyStyleToRange(
         range: Range,
@@ -429,12 +419,11 @@
             }
         }
         // 清理空节点，但保留文档结构
-        cleanupEmptyNodes(range.commonAncestorContainer);
+        // cleanupEmptyNodes(range.commonAncestorContainer);
         // 恢复原始选区
         range.setStart(savedRange.startContainer, savedRange.startOffset);
         range.setEnd(savedRange.endContainer, savedRange.endOffset);
     }
-    
     // 清理空节点，但保留文档结构
     function cleanupEmptyNodes(node: Node | null) {
         if (!node) return;
@@ -462,7 +451,6 @@
             }
         }
     }
-    
     // 获取样式配置
     function getStyleForType(type: string, color?: string) {
         return (element: HTMLElement) => {
@@ -494,7 +482,6 @@
             element.style.lineHeight = 'inherit';
         };
     }
-    
     // 渲染交互式注释
     function renderInteractiveAnnotations(rootNode: Node, annotations: ExtendedAnnotation[]) {
         console.log('Rendering interactive annotations on node:', rootNode);
@@ -552,7 +539,6 @@
             });
         });
     }
-    
     // 显示释义弹窗
     function showDefinitionPopup(word: string, definition: string, event: MouseEvent) {
         popupWord.value = word;
@@ -578,12 +564,10 @@
         popupPosition.value = { top, left };
         definitionPopupVisible.value = true;
     }
-    
     // 关闭释义弹窗
     function closeDefinitionPopup() {
         definitionPopupVisible.value = false;
     }
-    
     // 清除已有注释（防止重复渲染）
     function removeExistingAnnotations(rootNode: Node) {
         // @ts-ignore
@@ -597,7 +581,6 @@
             span.remove();
         });
     }
-    
     // 恢复章节注释
     function restoreAnnotationsForChapter(chapterHref: string) {
         if (!rendition.value) return;
@@ -647,7 +630,6 @@
             renderInteractiveAnnotations(iframeDoc.body, interactiveAnnotations);
         });
     }
-    
     // 保存当前选择为注释
     function saveCurrentSelection(type: string, color?: string, definition?: string) {
         const iframe = rendition.value?.manager.container.querySelector('iframe');
@@ -706,7 +688,6 @@
             type: 'success',
         });
     }
-    
     // 收藏文档
     function favoriteDoc() {
         saveCurrentSelection('highlight', '#FF0000');
@@ -715,7 +696,6 @@
             type: 'success',
         });
     }
-    
     // 十六进制转RGBA
     function hexToRgba(hex: string, alpha: number): string {
         hex = hex.replace('#', '');
@@ -733,53 +713,69 @@
         }
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
-    
     // 添加注释
     function addNote() {
-        const iframe = rendition.value?.manager.container.querySelector('iframe');
-        if (!iframe) return;
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!iframeDoc) return;
-        const selection = iframeDoc.getSelection();
-        if (!selection || selection.isCollapsed) return;
-        const selectedTextContent = selection.toString().trim();
-        if (!selectedTextContent) return;
-        currentSelection.value = {
-            range: selection.getRangeAt(0),
-            text: selectedTextContent
-        };
-        selectedText.value = selectedTextContent;
+        // 修复：使用之前保存的选中文本信息，而不是尝试获取当前selection
+        if (!selectedTextInfo.value) {
+            ElMessage.error('没有选择有效文本');
+            return;
+        }
+        
+        // 设置模态框内容
+        selectedText.value = selectedTextInfo.value.text;
         noteContent.value = '';
         noteModalVisible.value = true;
         selectShowJudge.value = false;
     }
-    
     // 保存注释
     function saveNote() {
-        if (!currentSelection.value) {
-            ElMessage.error('没有选择文本');
+        if (!selectedTextInfo.value) {
+            ElMessage.error('没有选择有效文本');
             return;
         }
-        const { range, text } = currentSelection.value;
-        // 获取当前章节信息
-        const currentLocation = rendition.value?.currentLocation();
-        if (!currentLocation) return;
-        const spineItem = book.value.spine.get(currentLocation.start.index);
-        if (!spineItem) return;
-        const chapterHref = spineItem.href;
+        
+        const { text, startOffset, endOffset, contextBefore, contextAfter, chapterHref, chapterText } = selectedTextInfo.value;
+        
+        // 创建注释对象
+        const annotation: ExtendedAnnotation = {
+            id: `ann-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            bookId: props.bookid,
+            chapterHref,
+            startOffset,
+            endOffset,
+            text,
+            contextBefore,
+            contextAfter,
+            type: 'note' as any,
+            createdAt: new Date().toISOString(),
+            definition: noteContent.value
+        };
+        
         // 保存注释
-        saveCurrentSelection('note', undefined, noteContent.value);
+        saveAnnotation(annotation);
+        
+        // 在当前视图中渲染注释
+        const iframe = rendition.value?.manager.container.querySelector('iframe');
+        if (iframe) {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDoc) {
+                // 重新创建range
+                const range = createRangeFromOffsets(iframeDoc.body, startOffset, endOffset);
+                if (range) {
+                    applyStyleToRange(range, getStyleForType('note'), true, annotation);
+                }
+            }
+        }
+        
         // 隐藏模态框
         noteModalVisible.value = false;
-        currentSelection.value = null;
+        selectedTextInfo.value = null;
     }
-    
     // 取消注释
     function cancelNote() {
         noteModalVisible.value = false;
-        currentSelection.value = null;
+        selectedTextInfo.value = null;
     }
-    
     // 初始化epub阅读器
     onMounted(async () => {
         const arrayBuffer: ArrayBuffer = await epubStorage.loadBook(props.bookid) as ArrayBuffer;
@@ -828,34 +824,27 @@
                     restoreAnnotationsForChapter(spineItem.href);
                 }, 100);
             }
-            
             // 添加触摸事件监听器到iframe内部文档
             const addTouchListenersToIframe = () => {
                 // 清理之前的触摸事件监听器
                 cleanupTouchListeners();
-                
                 // 添加触摸事件监听器到iframe内部的文档
                 const touchStartListener = (e: TouchEvent) => handleTouchStart(e);
                 const touchMoveListener = (e: TouchEvent) => handleTouchMove(e);
                 const touchEndListener = () => handleTouchEnd();
-                
                 iframeDoc.addEventListener('touchstart', touchStartListener, { passive: true });
                 iframeDoc.addEventListener('touchmove', touchMoveListener, { passive: true });
                 iframeDoc.addEventListener('touchend', touchEndListener);
-                
                 // 存储清理函数
                 touchCleanupFunctions.value.push(() => {
                     iframeDoc.removeEventListener('touchstart', touchStartListener);
                     iframeDoc.removeEventListener('touchmove', touchMoveListener);
                     iframeDoc.removeEventListener('touchend', touchEndListener);
                 });
-                
                 console.log('触摸事件监听器已添加到iframe内部文档');
             };
-            
             // 立即尝试添加触摸事件监听器
             addTouchListenersToIframe();
-            
             // 触发编辑
             iframeDoc.addEventListener('contextmenu', async function(event: MouseEvent) {
                 const selection = iframeDoc.getSelection();
@@ -912,6 +901,35 @@
                             iframe.contentDocument?.addEventListener('click', closeSelect);
                         }, 0);
                     };
+                    // 修复：提前保存选中文本信息，避免后续DOM变化导致selection失效
+                    // 获取当前章节信息
+                    const currentLocation = rendition.value?.currentLocation();
+                    if (!currentLocation) return;
+                    const spineItem = book.value.spine.get(currentLocation.start.index);
+                    if (!spineItem) return;
+                    const chapterHref = spineItem.href;
+                    
+                    // 获取章节纯文本
+                    const chapterText = getChapterText(iframeDoc.body);
+                    if (!chapterText) return;
+                    
+                    // 获取文本偏移量
+                    const { start: startOffset, end: endOffset } = getTextOffsets(range, iframeDoc.body);
+                    
+                    // 获取上下文用于精确匹配
+                    const context = getContext(chapterText, startOffset, selectionText.length);
+                    
+                    // 保存选中文本信息
+                    selectedTextInfo.value = {
+                        text: selectionText,
+                        startOffset,
+                        endOffset,
+                        contextBefore: context.before,
+                        contextAfter: context.after,
+                        chapterHref,
+                        chapterText
+                    };
+                    
                     // 发送查词请求
                     let qw =  await queryWord(selectionText);
                     let ans = qw?.['results']?.['basic'];
@@ -946,11 +964,10 @@
                         }
                     }
                     const user = queryContents()
-                    user.content = qw['results']['detailed']
+                    user.content = qw?.['results']['detailed']
                 }
             });
         });
-        
         // 监听键盘事件
         book.value.ready.then(() => {
             const keyListener = (e: KeyboardEvent) => {
@@ -969,7 +986,6 @@
             rendition.value?.on("keyup", keyListener);
             document.addEventListener("keyup", keyListener, false);
         });
-        
         // 传出书籍对象
         book.value.loaded.navigation.then(() => {
             const user = bookOBJ();
@@ -994,12 +1010,10 @@
             }
         });
     });
-    
     // 组件卸载时清理所有事件监听器
     onUnmounted(() => {
         cleanupTouchListeners();
     });
-    
     // 关闭阅读器
     function closeReader() {
         // 可以在这里添加清理逻辑
@@ -1008,7 +1022,6 @@
         bookUser.book = undefined;
         bookUser.changeMenu = undefined;
     }
-    
     // 复制
     function copyDoc() {
         const iframe = rendition.value.manager.container.querySelector('iframe');
@@ -1032,38 +1045,31 @@
             });
         }
     }
-    
     // 高亮
     function highLightDoc() {
         launchShowJudge.value = !launchShowJudge.value;
     }
-    
     // 高亮颜色选择
     function highLightColor(color: string): void {
         saveCurrentSelection('highlight', color);
     }
-    
     // 下划线
     function underlineDoc(): void {
         saveCurrentSelection('underline');
     }
-    
     // 加粗
     function boldDoc(): void {
         saveCurrentSelection('bold');
     }
-    
     // 斜体
     function italicDoc(): void {
         saveCurrentSelection('italic');
     }
-    
     // 弹出查词
     function queryWords(): void{
         const user = queryContents()
         user.show = true
     }
-    
     // 数据查找
     const updateLocationInfo = (location: any) => {
         if (!location) return;
@@ -1095,7 +1101,6 @@
         totalPages.value = location.start.displayed.total;
         currentHref.value = book.value.spine.get(location.start.index)?.href || '';
     };
-    
     const findTocItemByHref = (href: string) => {
         if (!book.value || !book.value.navigation.toc) return null;
         const findInItems = (items: any[]): any => {
@@ -1110,7 +1115,6 @@
         };
         return findInItems(book.value.navigation.toc);
     };
-    
     // 更新书本数据
     function updateBookData() {
         const user = bookOBJ();
@@ -1155,7 +1159,6 @@
         }
         return user.bookData
     }
-    
     // AI翻译功能
     function aiTranslate() {
         updateBookData()

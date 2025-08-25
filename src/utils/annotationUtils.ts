@@ -479,127 +479,63 @@ export function findTextWithContext(
     contextBefore: string,
     contextAfter: string,
 ): number {
-    // console.log(
-    //     `findTextWithContext: searching for "${searchText}" with context before: "${contextBefore}", after: "${contextAfter}"`,
-    // );
-
     if (!searchText) {
-        // console.log(`findTextWithContext: searchText is empty, returning -1`);
         return -1;
     }
 
-    // 清理搜索文本和上下文，但保留原始文本不变
+    // 清理搜索文本和上下文（保留原始文本不变）
     const cleanSearchText = searchText.replace(/\s+/g, " ").trim();
     const cleanContextBefore = contextBefore.replace(/\s+/g, " ").trim();
     const cleanContextAfter = contextAfter.replace(/\s+/g, " ").trim();
 
-    // console.log(`findTextWithContext: clean search: "${cleanSearchText}"`);
-    // console.log(
-    //     `findTextWithContext: clean context before: "${cleanContextBefore}"`,
-    // );
-    // // console.log(
-    //     `findTextWithContext: clean context after: "${cleanContextAfter}"`,
-    // );
-
     if (!cleanSearchText) {
-        // console.log(
-        //     `findTextWithContext: clean search text is empty, returning -1`,
-        // );
         return -1;
     }
 
-    const searchLength = cleanSearchText.length;
-    let bestMatchPosition = -1;
-    let bestMatchScore = 0;
+    // 关键修复：使用原始上下文长度（非清理后长度）进行截取
+    const rawContextBeforeLength = contextBefore.length;
+    const rawContextAfterLength = contextAfter.length;
+    
+    // 设置最大上下文截取长度（避免截取过多内容）
+    const MAX_CONTEXT_LENGTH = 500;
 
-    // 搜索所有可能的匹配位置
     let position = 0;
-    let matchCount = 0;
-
     while (position < text.length) {
         position = text.indexOf(searchText, position);
         if (position === -1) break;
 
-        matchCount++;
-        // console.log(
-        //     `findTextWithContext: found match ${matchCount} at position ${position}`,
-        // );
-
-        // 获取实际上下文
-        const beforeStart = Math.max(0, position - cleanContextBefore.length);
+        // 修复1: 使用原始上下文长度截取（保留空白字符）
+        const beforeStart = Math.max(0, position - Math.min(rawContextBeforeLength, MAX_CONTEXT_LENGTH));
         const beforeEnd = position;
         const afterStart = position + searchText.length;
         const afterEnd = Math.min(
             text.length,
-            position + searchText.length + cleanContextAfter.length,
+            position + searchText.length + Math.min(rawContextAfterLength, MAX_CONTEXT_LENGTH),
         );
 
         const before = text.substring(beforeStart, beforeEnd);
         const after = text.substring(afterStart, afterEnd);
 
-        // 清理实际上下文以进行比较
+        // 修复2: 清理后直接比较上下文
         const cleanBefore = before.replace(/\s+/g, " ").trim();
         const cleanAfter = after.replace(/\s+/g, " ").trim();
 
-        // console.log(
-        //     `findTextWithContext: actual context before: "${cleanBefore}"`,
-        // );
-        // console.log(
-        //     `findTextWithContext: actual context after: "${cleanAfter}"`,
-        // );
+        // 检查上下文是否匹配
+        const isBeforeMatch = cleanContextBefore === "" || 
+                             cleanBefore.endsWith(cleanContextBefore);
+        
+        const isAfterMatch = cleanContextAfter === "" || 
+                            cleanAfter.startsWith(cleanContextAfter);
 
-        // 计算上下文匹配度
-        const beforeMatchScore = calculateMatchScore(
-            cleanBefore,
-            cleanContextBefore,
-        );
-        const afterMatchScore = calculateMatchScore(
-            cleanAfter,
-            cleanContextAfter,
-        );
-
-        // console.log(
-        //     `findTextWithContext: before match score: ${beforeMatchScore}`,
-        // );
-        // // console.log(
-        //     `findTextWithContext: after match score: ${afterMatchScore}`,
-        // );
-
-        // 综合评分
-        const matchScore = (beforeMatchScore + afterMatchScore) / 2;
-        // console.log(`findTextWithContext: overall match score: ${matchScore}`);
-
-        // 如果找到完美匹配，立即返回
-        if (matchScore > 0.9) {
-            // console.log(
-            //     `findTextWithContext: perfect match found at position ${position}`,
-            // );
+        if (isBeforeMatch && isAfterMatch) {
             return position;
-        }
-
-        // 保存最佳匹配
-        if (matchScore > bestMatchScore) {
-            bestMatchScore = matchScore;
-            bestMatchPosition = position;
-            // console.log(
-            //     `findTextWithContext: new best match at position ${position} with score ${bestMatchScore}`,
-            // );
         }
 
         position++;
     }
 
-    // console.log(`findTextWithContext: found ${matchCount} total matches`);
-
-    // 如果最佳匹配的评分足够高，返回它
-    if (bestMatchScore > 0.7) {
-        // console.log(
-        //     `findTextWithContext: returning best match at position ${bestMatchPosition} with score ${bestMatchScore}`,
-        // );
-        return bestMatchPosition;
-    }
-
-    // console.log(`findTextWithContext: no suitable match found, returning -1`);
+    // 未找到匹配项时输出调试信息
+    console.log(`error:Text:${text}  SearchText:${searchText} contextBefore:${contextBefore} contextAfter:${contextAfter}`);
     return -1;
 }
 
@@ -692,6 +628,7 @@ export function getChapterText(rootNode: Node): string {
     const text = rootNode.textContent || "";
     // console.log(`getChapterText: extracted text with length ${text.length}`);
     return text;
+    
 }
 
 /**
